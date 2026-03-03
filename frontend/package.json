@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:mock": "vite build --mode mock",
+    "preview": "vite preview",
+    "preview:mock": "vite preview --mode mock"
   },
   "dependencies": {
     "react": "^18.3.1",

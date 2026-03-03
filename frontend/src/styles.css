@@ -110,6 +110,10 @@ button {
   border-radius: 8px;
 }
 
+.hierarchy-scale-shell {
+  position: relative;
+}
+
 .hierarchy-lines {
   position: absolute;
   inset: 0;
@@ -147,6 +151,15 @@ button {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+.hierarchy-node.clickable {
+  cursor: pointer;
+}
+
+.hierarchy-node.selected {
+  outline: 3px solid #ffce54;
+  outline-offset: 2px;
+}
+
 .hierarchy-node .name {
   font-weight: 700;
   line-height: 1.2;
@@ -179,4 +192,27 @@ button {
 
 .hierarchy-node.spouse {
   background: linear-gradient(180deg, #27a6d8 0%, #0d90c4 100%);
+}
+
+.mock-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.mock-controls-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.mock-controls-buttons button {
+  width: auto;
+  margin: 0;
+  padding: 6px 12px;
+}
+
+.mock-details p {
+  margin: 8px 0;
 }

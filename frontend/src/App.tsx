@@ -1,12 +1,23 @@
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { clearToken } from "./api/client";
+import { runtimeConfig } from "./config/runtime";
 import { LoginPage } from "./pages/LoginPage";
 import { CasesPage } from "./pages/CasesPage";
 import { EditorPage } from "./pages/EditorPage";
+import { MockPreviewPage } from "./pages/MockPreviewPage";
 
 export function App() {
-  const hasToken = Boolean(localStorage.getItem("token"));
   const navigate = useNavigate();
+
+  if (runtimeConfig.appMode === "mock") {
+    return (
+      <Routes>
+        <Route path="*" element={<MockPreviewPage />} />
+      </Routes>
+    );
+  }
+
+  const hasToken = Boolean(localStorage.getItem("token"));
 
   return (
     <div>

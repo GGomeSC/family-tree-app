@@ -123,6 +123,27 @@ npm install
 npm run dev
 ```
 
+## Preview estático (GitHub Pages)
+
+Para gerar o mock estático (sem backend), use:
+
+```bash
+cd frontend
+npm install
+npm run build:mock
+npm run preview:mock
+```
+
+Com `build:mock`, a aplicação entra em modo de demonstração:
+- renderiza apenas a tela de visualização da árvore com dados fixos
+- usa roteamento hash (`#/`) para compatibilidade com GitHub Pages
+- funciona sem autenticação e sem chamadas de API
+
+Deploy automático:
+- workflow em `.github/workflows/deploy-pages.yml`
+- publicação em push para `main` (quando houver mudanças em `frontend/**`)
+- URL esperada: `https://ggomesc.github.io/family-tree-app/`
+
 ## Endpoints principais
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`
