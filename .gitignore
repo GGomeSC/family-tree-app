@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+*/venv
+backend/.venv/
+frontend/node_modules/
+frontend/dist/
+backend/exports/
+family_tree.db
+.postgres/
+

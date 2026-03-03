@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: family_tree_db
+    environment:
+      POSTGRES_DB: family_tree
+      POSTGRES_USER: family_tree
+      POSTGRES_PASSWORD: family_tree
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U family_tree -d family_tree"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: family_tree_backend
+    environment:
+      APP_NAME: Family Tree API
+      ENVIRONMENT: development
+      SECRET_KEY: local-dev-secret-change-in-prod
+      ACCESS_TOKEN_EXPIRE_MINUTES: 720
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql+psycopg2://family_tree:family_tree@db:5432/family_tree
+      ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      ALLOWED_ORIGIN_REGEX: http://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|192\.168\.\d+\.\d+):5173
+      EXPORT_DIR: /app/exports
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_exports:/app/exports
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: family_tree_frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  postgres_data:
+  backend_exports:

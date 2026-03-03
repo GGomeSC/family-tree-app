@@ -1,0 +1,182 @@
+:root {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: #123;
+  background: linear-gradient(180deg, #eef3f7, #e7ecf2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: #0f4f72;
+  color: #fff;
+}
+
+.topbar a,
+.topbar button {
+  margin-left: 12px;
+  color: #fff;
+  background: none;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  padding: 6px 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.container {
+  width: min(1200px, 96vw);
+  margin: 18px auto;
+}
+
+.container.narrow {
+  width: min(420px, 94vw);
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px;
+  border: 1px solid #dbe2ea;
+  box-shadow: 0 2px 8px rgba(10, 28, 45, 0.08);
+  margin-bottom: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+button {
+  background: #0f5f84;
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+}
+
+.error {
+  color: #b50000;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #ecf0f5;
+}
+
+.hierarchy-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+}
+
+.hierarchy-canvas {
+  position: relative;
+  min-height: 260px;
+  background: linear-gradient(180deg, #f5f7fa, #edf2f7);
+  border: 1px solid #d6e0ea;
+  border-radius: 8px;
+}
+
+.hierarchy-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2;
+}
+
+.line.lineage {
+  stroke: #1b6690;
+}
+
+.line.spouse {
+  stroke: #2597c9;
+}
+
+.marriage-date {
+  fill: #102c43;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hierarchy-node {
+  position: absolute;
+  width: 220px;
+  min-height: 96px;
+  border-radius: 4px;
+  color: #fff;
+  padding: 10px 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.hierarchy-node .name {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hierarchy-node .birth {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.hierarchy-node .badge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -18px;
+  background: #f0f3f7;
+  color: #123146;
+  border: 2px solid #1b6690;
+  border-radius: 2px;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hierarchy-node.lineage {
+  background: linear-gradient(180deg, #356f94 0%, #0f5f84 100%);
+}
+
+.hierarchy-node.spouse {
+  background: linear-gradient(180deg, #27a6d8 0%, #0d90c4 100%);
+}
