@@ -28,6 +28,7 @@ interface HierarchyPreviewProps {
   selectedPersonId?: number | null;
   onSelectPerson?: (personId: number) => void;
   scale?: number;
+  overflowMode?: "scroll" | "fit";
 }
 
 export function HierarchyPreview({
@@ -35,6 +36,7 @@ export function HierarchyPreview({
   selectedPersonId = null,
   onSelectPerson,
   scale = 1,
+  overflowMode = "scroll",
 }: HierarchyPreviewProps) {
   const byId = new Map<number, LayoutPerson>(preview.persons.map((p) => [p.id, p]));
   const unionsById = new Map<number, LayoutUnion>(preview.unions.map((u) => [u.id, u]));
@@ -49,7 +51,7 @@ export function HierarchyPreview({
   const scaledHeight = Math.round(height * normalizedScale);
 
   return (
-    <div className="hierarchy-scroll">
+    <div className={`hierarchy-scroll ${overflowMode === "fit" ? "hierarchy-scroll-fit" : ""}`}>
       <div className="hierarchy-scale-shell" style={{ width: `${scaledWidth}px`, height: `${scaledHeight}px` }}>
         <div
           className="hierarchy-canvas"
