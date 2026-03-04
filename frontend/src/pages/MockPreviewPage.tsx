@@ -10,6 +10,7 @@ const MOBILE_BREAKPOINT = 900;
 type MockPerson = (typeof mockLayoutPreview.persons)[number];
 
 type ZoomMode = "auto" | "manual";
+type NameDisplayMode = "first-first" | "last-first";
 
 interface PersonRelations {
   spouses: number[];
@@ -125,15 +126,32 @@ function DetailsPanelContent({
 
 export function MockPreviewPage() {
   const treeHostRef = useRef<HTMLDivElement | null>(null);
-  const initialSelection = mockLayoutPreview.persons.find((person) => person.is_richiedente)?.id ?? null;
+  const nameMenuRef = useRef<HTMLDivElement | null>(null);
+  const initialSelection =
+    mockLayoutPreview.persons.find((person) => person.id === 9)?.id ??
+    mockLayoutPreview.persons.find((person) => person.is_richiedente)?.id ??
+    null;
 
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(initialSelection);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [isMobileDetailsOpen, setIsMobileDetailsOpen] = useState(false);
   const [zoomMode, setZoomMode] = useState<ZoomMode>("auto");
+  const [nameDisplayMode, setNameDisplayMode] = useState<NameDisplayMode>("first-first");
+  const [nameTargetPersonIds, setNameTargetPersonIds] = useState<number[]>(
+    () => mockLayoutPreview.persons.map((person) => person.id)
+  );
+  const [isNameMenuOpen, setIsNameMenuOpen] = useState(false);
   const [userZoomFactor, setUserZoomFactor] = useState(1);
   const [availableWidth, setAvailableWidth] = useState(0);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= MOBILE_BREAKPOINT);
+
+  const nameTargetCandidates = useMemo(
+    () =>
+      [...mockLayoutPreview.persons].sort(
+        (a, b) => a.y - b.y || a.x - b.x || a.name.localeCompare(b.name, "pt-BR")
+      ),
+    []
+  );
 
   const byId = useMemo(
     () => new Map<number, MockPerson>(mockLayoutPreview.persons.map((person) => [person.id, person])),
@@ -179,6 +197,30 @@ export function MockPreviewPage() {
       setIsMobileDetailsOpen(false);
     }
   }, [isMobile]);
+
+  useEffect(() => {
+    if (!isNameMenuOpen) return;
+
+    function handleDocumentClick(event: MouseEvent) {
+      const target = event.target as Node;
+      if (nameMenuRef.current && !nameMenuRef.current.contains(target)) {
+        setIsNameMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsNameMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleDocumentClick);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isNameMenuOpen]);
 
   useEffect(() => {
     const target = treeHostRef.current;
@@ -231,11 +273,28 @@ export function MockPreviewPage() {
     setUserZoomFactor(clamp(Number(nextFactor.toFixed(2)), 0.2, 3));
   }
 
+  function toggleNameDisplayMode() {
+    setNameDisplayMode((current) => (current === "first-first" ? "last-first" : "first-first"));
+  }
+
+  function toggleNameMenu() {
+    setIsNameMenuOpen((current) => !current);
+  }
+
+  function toggleNameTargetPerson(personId: number) {
+    setNameTargetPersonIds((current) =>
+      current.includes(personId) ? current.filter((id) => id !== personId) : [...current, personId]
+    );
+  }
+
   return (
     <main className="container mock-wide">
       <header className="mock-page-header">
         <h2>Preview estático da árvore familiar</h2>
         <p>Visualização com dados fixos para demonstração comercial em ambiente 100% estático.</p>
+        <p className="mock-page-note">
+          Este mock inclui o caso de filha única centralizada entre os genitores e união na geração seguinte.
+        </p>
       </header>
 
       <section className={`mock-shell ${detailsOpen ? "details-open" : "details-collapsed"}`}>
@@ -266,6 +325,55 @@ export function MockPreviewPage() {
                 </button>
               )}
             </div>
+            <div className="mock-name-menu" ref={nameMenuRef}>
+              <button
+                type="button"
+                className="mock-name-menu-trigger"
+                aria-label="Abrir menu de formatação de nome"
+                aria-expanded={isNameMenuOpen}
+                onClick={toggleNameMenu}
+              >
+                ≡
+              </button>
+              {isNameMenuOpen && (
+                <div className="mock-name-menu-panel">
+                  <section className="mock-name-menu-section">
+                    <span className="mock-name-menu-label">Formato</span>
+                    <div className="mock-name-toggle">
+                      <button
+                        type="button"
+                        className={`mock-name-toggle-track ${
+                          nameDisplayMode === "last-first" ? "is-last-first" : ""
+                        }`}
+                        role="switch"
+                        aria-checked={nameDisplayMode === "last-first"}
+                        aria-label="Alternar entre primeiro nome ou sobrenome na primeira linha"
+                        onClick={toggleNameDisplayMode}
+                      >
+                        <span className="mock-name-toggle-thumb" aria-hidden="true" />
+                        <span className="mock-name-toggle-option">Nome</span>
+                        <span className="mock-name-toggle-option">Sobrenome</span>
+                      </button>
+                    </div>
+                  </section>
+                  <section className="mock-name-menu-section">
+                    <span className="mock-name-menu-label">Aplicar em</span>
+                    <div className="mock-name-node-list">
+                      {nameTargetCandidates.map((person) => (
+                        <label key={person.id} className="mock-name-node-item">
+                          <input
+                            type="checkbox"
+                            checked={nameTargetPersonIds.includes(person.id)}
+                            onChange={() => toggleNameTargetPerson(person.id)}
+                          />
+                          <span>{person.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              )}
+            </div>
           </div>
 
           <div ref={treeHostRef} className="mock-tree-stage">
@@ -275,6 +383,8 @@ export function MockPreviewPage() {
               onSelectPerson={handleSelectPerson}
               scale={finalScale}
               overflowMode={zoomMode === "auto" ? "fit" : "scroll"}
+              nameDisplayMode={nameDisplayMode}
+              nameTargetPersonIds={nameTargetPersonIds}
             />
           </div>
         </section>

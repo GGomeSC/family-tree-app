@@ -19,6 +19,35 @@ function formatDate(value: string) {
   return `${d}/${m}/${y}`;
 }
 
+type NameDisplayMode = "first-first" | "last-first";
+
+function formatNodeName(value: string, nameDisplayMode: NameDisplayMode) {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) {
+    return { firstName: "Pessoa", restName: "sem nome" };
+  }
+
+  const parts = normalized.split(" ");
+  if (parts.length === 1) {
+    return {
+      firstName: parts[0],
+      restName: "",
+    };
+  }
+
+  if (nameDisplayMode === "last-first") {
+    return {
+      firstName: parts[parts.length - 1],
+      restName: parts.slice(0, -1).join(" "),
+    };
+  }
+
+  return {
+    firstName: parts[0],
+    restName: parts.slice(1).join(" "),
+  };
+}
+
 function edgeKey(edge: LayoutEdge) {
   return `${edge.from_id}-${edge.to_id}-${edge.via_union_id ?? "direct"}`;
 }
@@ -29,6 +58,8 @@ interface HierarchyPreviewProps {
   onSelectPerson?: (personId: number) => void;
   scale?: number;
   overflowMode?: "scroll" | "fit";
+  nameDisplayMode?: NameDisplayMode;
+  nameTargetPersonIds?: number[];
 }
 
 export function HierarchyPreview({
@@ -37,12 +68,15 @@ export function HierarchyPreview({
   onSelectPerson,
   scale = 1,
   overflowMode = "scroll",
+  nameDisplayMode = "first-first",
+  nameTargetPersonIds = [],
 }: HierarchyPreviewProps) {
   const byId = new Map<number, LayoutPerson>(preview.persons.map((p) => [p.id, p]));
   const unionsById = new Map<number, LayoutUnion>(preview.unions.map((u) => [u.id, u]));
 
   const maxX = preview.persons.reduce((acc, person) => Math.max(acc, person.x), 0);
   const maxY = preview.persons.reduce((acc, person) => Math.max(acc, person.y), 0);
+  const targetSet = new Set<number>(nameTargetPersonIds);
 
   const width = Math.max(maxX + NODE_WIDTH + PAD_X * 2, 860);
   const height = Math.max(maxY + NODE_HEIGHT + PAD_Y * 2, 260);
@@ -134,33 +168,41 @@ export function HierarchyPreview({
             })}
           </svg>
 
-          {preview.persons.map((person) => (
-            <article
-              key={person.id}
-              className={`hierarchy-node ${person.role} ${
-                selectedPersonId === person.id ? "selected" : ""
-              } ${onSelectPerson ? "clickable" : ""}`}
-              style={{ left: `${person.x + PAD_X}px`, top: `${person.y + PAD_Y}px` }}
-              onClick={onSelectPerson ? () => onSelectPerson(person.id) : undefined}
-              onKeyDown={
-                onSelectPerson
-                  ? (event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        onSelectPerson(person.id);
+          {preview.persons.map((person) => {
+            const effectiveNameDisplayMode = targetSet.has(person.id) ? nameDisplayMode : "first-first";
+            const formattedName = formatNodeName(person.name, effectiveNameDisplayMode);
+
+            return (
+              <article
+                key={person.id}
+                className={`hierarchy-node ${person.role} ${
+                  selectedPersonId === person.id ? "selected" : ""
+                } ${onSelectPerson ? "clickable" : ""}`}
+                style={{ left: `${person.x + PAD_X}px`, top: `${person.y + PAD_Y}px` }}
+                onClick={onSelectPerson ? () => onSelectPerson(person.id) : undefined}
+                onKeyDown={
+                  onSelectPerson
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onSelectPerson(person.id);
+                        }
                       }
-                    }
-                  : undefined
-              }
-              role={onSelectPerson ? "button" : undefined}
-              tabIndex={onSelectPerson ? 0 : undefined}
-              aria-pressed={onSelectPerson ? selectedPersonId === person.id : undefined}
-            >
-              <div className="name">{person.name}</div>
-              <div className="birth">{formatDate(person.birth_date)}</div>
-              {person.is_richiedente && <div className="badge">Richiedente</div>}
-            </article>
-          ))}
+                    : undefined
+                }
+                role={onSelectPerson ? "button" : undefined}
+                tabIndex={onSelectPerson ? 0 : undefined}
+                aria-pressed={onSelectPerson ? selectedPersonId === person.id : undefined}
+              >
+                <div className="name">
+                  <span className="name-first">{formattedName.firstName}</span>
+                  {formattedName.restName && <span className="name-rest">{formattedName.restName}</span>}
+                </div>
+                <div className="birth">{formatDate(person.birth_date)}</div>
+                {person.is_richiedente && <div className="badge">Richiedente</div>}
+              </article>
+            );
+          })}
         </div>
       </div>
     </div>
