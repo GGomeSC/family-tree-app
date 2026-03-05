@@ -22,7 +22,7 @@ export function App() {
   return (
     <div>
       <header className="topbar">
-        <h1>Árvore Familiar</h1>
+        <h1>Árvore Genealógica</h1>
         <nav>
           <Link to="/cases">Casos</Link>
           {hasToken && (

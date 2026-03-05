@@ -133,8 +133,8 @@ export function MockPreviewPage() {
   return (
     <main className="container mock-wide">
       <header className="mock-page-header">
-        <h2>Preview estático da árvore familiar</h2>
-        <p>Visualização com dados fixos para demonstração comercial.</p>
+        <h2>Preview da árvore genealógica</h2>
+        <p>Visualização com dados fixos para demonstração.</p>
       </header>
 
       <section className={`mock-shell ${ui.detailsOpen ? "details-open" : "details-collapsed"}`}>
