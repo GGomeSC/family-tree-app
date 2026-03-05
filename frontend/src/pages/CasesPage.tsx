@@ -5,40 +5,30 @@ import { CaseItem } from "../types";
 
 export function CasesPage() {
   const [cases, setCases] = useState<CaseItem[]>([]);
-  const [title, setTitle] = useState("");
-  const [clientReference, setClientReference] = useState("");
+  const [form, setForm] = useState({ title: "", clientRef: "" });
   const [error, setError] = useState("");
 
-  async function loadCases() {
+  const loadCases = () => api.listCases().then(setCases).catch((e) => setError(e.message));
+  useEffect(() => { loadCases(); }, []);
+
+  const onCreate = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
     try {
-      setCases(await api.listCases());
+      await api.createCase(form.title, form.clientRef || undefined);
+      setForm({ title: "", clientRef: "" });
+      loadCases();
     } catch (err) {
       setError((err as Error).message);
     }
-  }
-
-  useEffect(() => {
-    void loadCases();
-  }, []);
-
-  async function onCreate(e: FormEvent) {
-    e.preventDefault();
-    await api.createCase(title, clientReference || undefined);
-    setTitle("");
-    setClientReference("");
-    await loadCases();
-  }
+  };
 
   return (
     <main className="container">
       <h2>Casos</h2>
       <form className="card row" onSubmit={onCreate}>
-        <input placeholder="Título do caso" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <input
-          placeholder="Referência do cliente"
-          value={clientReference}
-          onChange={(e) => setClientReference(e.target.value)}
-        />
+        <input placeholder="Título do caso" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required />
+        <input placeholder="Referência do cliente" value={form.clientRef} onChange={(e) => setForm((f) => ({ ...f, clientRef: e.target.value }))} />
         <button type="submit">Novo caso</button>
       </form>
 

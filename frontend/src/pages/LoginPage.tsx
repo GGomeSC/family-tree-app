@@ -4,21 +4,20 @@ import { api, setToken } from "../api/client";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("admin123");
+  const [form, setForm] = useState({ email: "admin@example.com", password: "admin123" });
   const [error, setError] = useState("");
 
-  async function onSubmit(e: FormEvent) {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     try {
-      const result = await api.login(email, password);
-      setToken(result.access_token);
+      const { access_token } = await api.login(form.email, form.password);
+      setToken(access_token);
       navigate("/cases");
     } catch (err) {
       setError((err as Error).message);
     }
-  }
+  };
 
   return (
     <main className="container narrow">
@@ -26,11 +25,11 @@ export function LoginPage() {
       <form onSubmit={onSubmit} className="card">
         <label>
           E-mail
-          <input value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
         </label>
         <label>
           Senha
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
         </label>
         {error && <p className="error">{error}</p>}
         <button type="submit">Acessar</button>

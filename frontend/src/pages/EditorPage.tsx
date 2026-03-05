@@ -13,100 +13,52 @@ export function EditorPage() {
   const [exports, setExports] = useState<ExportItem[]>([]);
   const [error, setError] = useState("");
 
-  const [name, setName] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [isRichiedente, setIsRichiedente] = useState(false);
+  const [personForm, setPersonForm] = useState({ name: "", birthDate: "", isRichiedente: false });
+  const [unionForm, setUnionForm] = useState({ partnerA: 0, partnerB: 0, marriageDate: "" });
+  const [linkForm, setLinkForm] = useState({ parentId: 0, childId: 0 });
 
-  const [partnerA, setPartnerA] = useState(0);
-  const [partnerB, setPartnerB] = useState(0);
-  const [marriageDate, setMarriageDate] = useState("");
-
-  const [parentId, setParentId] = useState(0);
-  const [childId, setChildId] = useState(0);
-
-  async function loadPreview() {
+  const loadData = async () => {
     try {
-      setPreview(await api.preview(id));
-    } catch {
-      setPreview(null);
-    }
-  }
-
-  async function loadExports() {
-    try {
-      setExports(await api.listExports(id));
-    } catch {
-      setExports([]);
-    }
-  }
-
-  useEffect(() => {
-    void loadPreview();
-    void loadExports();
-  }, [id]);
-
-  useEffect(() => {
-    if (!preview) return;
-    const mapped = preview.persons.map((p) => ({
-      id: p.id,
-      case_id: id,
-      full_name: p.name,
-      birth_date: p.birth_date,
-      is_richiedente: p.is_richiedente,
-      notes: null,
-    }));
-    setPersons(mapped);
-  }, [preview, id]);
-
-  async function createPerson(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    try {
-      await api.createPerson(id, { full_name: name, birth_date: birthDate, is_richiedente: isRichiedente });
-      setName("");
-      setBirthDate("");
-      setIsRichiedente(false);
-      await loadPreview();
+      const [prev, exps] = await Promise.all([api.preview(id).catch(() => null), api.listExports(id).catch(() => [])]);
+      setPreview(prev);
+      setExports(exps);
+      if (prev) {
+        setPersons(prev.persons.map((p) => ({
+          id: p.id, case_id: id, full_name: p.name, birth_date: p.birth_date, is_richiedente: p.is_richiedente, notes: null
+        })));
+      }
     } catch (err) {
-      setError((err as Error).message);
+      console.error(err);
     }
-  }
+  };
 
-  async function createUnion(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    try {
-      await api.createUnion(id, {
-        partner_a_person_id: Number(partnerA),
-        partner_b_person_id: Number(partnerB),
-        marriage_date: marriageDate || undefined,
-      });
-      await loadPreview();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
+  useEffect(() => { void loadData(); }, [id]);
 
-  async function createLink(e: FormEvent) {
-    e.preventDefault();
+  const withError = (fn: () => Promise<void>) => async (e?: FormEvent) => {
+    e?.preventDefault();
     setError("");
-    try {
-      await api.createParentChild(id, { parent_person_id: Number(parentId), child_person_id: Number(childId) });
-      await loadPreview();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
+    try { await fn(); await loadData(); }
+    catch (err) { setError((err as Error).message); }
+  };
 
-  async function onExportPdf() {
-    setError("");
-    try {
-      await api.exportPdf(id);
-      await loadExports();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
+  const createPerson = withError(async () => {
+    await api.createPerson(id, { full_name: personForm.name, birth_date: personForm.birthDate, is_richiedente: personForm.isRichiedente });
+    setPersonForm({ name: "", birthDate: "", isRichiedente: false });
+  });
+
+  const createUnion = withError(async () => {
+    await api.createUnion(id, { partner_a_person_id: unionForm.partnerA, partner_b_person_id: unionForm.partnerB, marriage_date: unionForm.marriageDate || undefined });
+    setUnionForm({ partnerA: 0, partnerB: 0, marriageDate: "" });
+  });
+
+  const createLink = withError(async () => {
+    await api.createParentChild(id, { parent_person_id: linkForm.parentId, child_person_id: linkForm.childId });
+    setLinkForm({ parentId: 0, childId: 0 });
+  });
+
+  const onExportPdf = withError(() => api.exportPdf(id));
+
+  const personOptions = persons.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>);
 
   return (
     <main className="container">
@@ -116,14 +68,10 @@ export function EditorPage() {
       <section className="grid-two">
         <form className="card" onSubmit={createPerson}>
           <h3>Pessoa</h3>
-          <input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} required />
-          <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
+          <input placeholder="Nome completo" value={personForm.name} onChange={(e) => setPersonForm((p) => ({ ...p, name: e.target.value }))} required />
+          <input type="date" value={personForm.birthDate} onChange={(e) => setPersonForm((p) => ({ ...p, birthDate: e.target.value }))} required />
           <label>
-            <input
-              type="checkbox"
-              checked={isRichiedente}
-              onChange={(e) => setIsRichiedente(e.target.checked)}
-            />
+            <input type="checkbox" checked={personForm.isRichiedente} onChange={(e) => setPersonForm((p) => ({ ...p, isRichiedente: e.target.checked }))} />
             Richiedente
           </label>
           <button type="submit">Adicionar pessoa</button>
@@ -131,35 +79,23 @@ export function EditorPage() {
 
         <form className="card" onSubmit={createUnion}>
           <h3>União</h3>
-          <select value={partnerA} onChange={(e) => setPartnerA(Number(e.target.value))} required>
-            <option value={0}>Parceiro A</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>{p.full_name}</option>
-            ))}
+          <select value={unionForm.partnerA} onChange={(e) => setUnionForm((p) => ({ ...p, partnerA: Number(e.target.value) }))} required>
+            <option value={0}>Parceiro A</option>{personOptions}
           </select>
-          <select value={partnerB} onChange={(e) => setPartnerB(Number(e.target.value))} required>
-            <option value={0}>Parceiro B</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>{p.full_name}</option>
-            ))}
+          <select value={unionForm.partnerB} onChange={(e) => setUnionForm((p) => ({ ...p, partnerB: Number(e.target.value) }))} required>
+            <option value={0}>Parceiro B</option>{personOptions}
           </select>
-          <input type="date" value={marriageDate} onChange={(e) => setMarriageDate(e.target.value)} />
+          <input type="date" value={unionForm.marriageDate} onChange={(e) => setUnionForm((p) => ({ ...p, marriageDate: e.target.value }))} />
           <button type="submit">Adicionar união</button>
         </form>
 
         <form className="card" onSubmit={createLink}>
           <h3>Vínculo pai/mãe-filho(a)</h3>
-          <select value={parentId} onChange={(e) => setParentId(Number(e.target.value))} required>
-            <option value={0}>Pessoa ascendente</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>{p.full_name}</option>
-            ))}
+          <select value={linkForm.parentId} onChange={(e) => setLinkForm((p) => ({ ...p, parentId: Number(e.target.value) }))} required>
+            <option value={0}>Pessoa ascendente</option>{personOptions}
           </select>
-          <select value={childId} onChange={(e) => setChildId(Number(e.target.value))} required>
-            <option value={0}>Pessoa descendente</option>
-            {persons.map((p) => (
-              <option key={p.id} value={p.id}>{p.full_name}</option>
-            ))}
+          <select value={linkForm.childId} onChange={(e) => setLinkForm((p) => ({ ...p, childId: Number(e.target.value) }))} required>
+            <option value={0}>Pessoa descendente</option>{personOptions}
           </select>
           <button type="submit">Adicionar vínculo</button>
         </form>
@@ -170,9 +106,7 @@ export function EditorPage() {
           <ul className="list">
             {exports.map((ex) => (
               <li key={ex.id}>
-                <a href={api.downloadExportUrl(ex.id)} target="_blank" rel="noreferrer">
-                  Export #{ex.id} - {new Date(ex.created_at).toLocaleString("pt-BR")}
-                </a>
+                <a href={api.downloadExportUrl(ex.id)} target="_blank" rel="noreferrer">Export #{ex.id} - {new Date(ex.created_at).toLocaleString("pt-BR")}</a>
               </li>
             ))}
           </ul>
@@ -181,8 +115,7 @@ export function EditorPage() {
 
       <section className="card">
         <h3>Preview (layout automático)</h3>
-        {!preview && <p>Adicione pessoas e vínculos para visualizar.</p>}
-        {preview && <HierarchyPreview preview={preview} />}
+        {!preview ? <p>Adicione pessoas e vínculos para visualizar.</p> : <HierarchyPreview preview={preview} />}
       </section>
     </main>
   );
