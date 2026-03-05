@@ -345,6 +345,28 @@ button {
   letter-spacing: 0.03em;
 }
 
+.mock-name-menu-expandable-trigger {
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: inherit;
+}
+
+.mock-name-menu-expandable-trigger .mock-name-menu-label {
+  margin-bottom: 0;
+}
+
+.mock-name-menu-expandable-trigger span:last-child {
+  font-size: 10px;
+  color: #8da1b0;
+}
+
 .mock-name-toggle {
   display: flex;
 }

@@ -105,6 +105,7 @@ export function MockPreviewPage() {
     detailsOpen: true, mobileDetailsOpen: false, zoomMode: "auto" as ZoomMode,
     nameMode: "first-first" as NameDisplayMode, isNameMenuOpen: false,
     lang: "pt" as LegendLanguage, zoomFactor: 1, width: 0,
+    isApplyToOpen: false,
   });
 
   const [targetIds, setTargetIds] = useState(() => mockLayoutPreview.persons.map((p) => p.id));
@@ -150,30 +151,48 @@ export function MockPreviewPage() {
               <button className="mock-name-menu-trigger" onClick={() => toggle("isNameMenuOpen")}>≡</button>
               {ui.isNameMenuOpen && (
                 <div className="mock-name-menu-panel">
-                  {[
-                    { label: "Formato", key: "nameMode", opt: ["Nome", "Sobrenome"], active: ui.nameMode === "last-first" },
-                    { label: "Idioma", key: "lang", opt: ["PT", "IT"], active: ui.lang === "it" },
-                  ].map((s) => (
-                    <section key={s.label} className="mock-name-menu-section">
-                      <span className="mock-name-menu-label">{s.label}</span>
-                      <button
-                        className={`mock-name-toggle-track ${s.active ? "active" : ""}`}
-                        onClick={() => setUi((p) => ({ ...p, [s.key]: s.active ? (s.key === "lang" ? "pt" : "first-first") : (s.key === "lang" ? "it" : "last-first") }))}
-                      >
-                        <span className="mock-name-toggle-thumb" /><span className="mock-name-toggle-option">{s.opt[0]}</span><span className="mock-name-toggle-option">{s.opt[1]}</span>
-                      </button>
-                    </section>
-                  ))}
+                  {/* Section: Format */}
                   <section className="mock-name-menu-section">
-                    <span className="mock-name-menu-label">Aplicar em</span>
-                    <div className="mock-name-node-list">
-                      {candidates.map((p) => (
-                        <label key={p.id} className="mock-name-node-item">
-                          <input type="checkbox" checked={targetIds.includes(p.id)} onChange={() => setTargetIds((curr) => curr.includes(p.id) ? curr.filter((i) => i !== p.id) : [...curr, p.id])} />
-                          <span>{p.name}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <span className="mock-name-menu-label">Formato</span>
+                    <button
+                      className={`mock-name-toggle-track ${ui.nameMode === "last-first" ? "is-last-first" : ""}`}
+                      onClick={() => setUi((p) => ({ ...p, nameMode: p.nameMode === "last-first" ? "first-first" : "last-first" }))}
+                    >
+                      <span className="mock-name-toggle-thumb" />
+                      <span className="mock-name-toggle-option">Nome</span>
+                      <span className="mock-name-toggle-option">Sobrenome</span>
+                    </button>
+                  </section>
+
+                  {/* Section: Apply To (Expandable) */}
+                  <section className="mock-name-menu-section">
+                    <button className="mock-name-menu-expandable-trigger" onClick={() => toggle("isApplyToOpen")}>
+                      <span className="mock-name-menu-label">Aplicar em</span>
+                      <span>{ui.isApplyToOpen ? "▲" : "▼"}</span>
+                    </button>
+                    {ui.isApplyToOpen && (
+                      <div className="mock-name-node-list">
+                        {candidates.map((p) => (
+                          <label key={p.id} className="mock-name-node-item">
+                            <input type="checkbox" checked={targetIds.includes(p.id)} onChange={() => setTargetIds((curr) => curr.includes(p.id) ? curr.filter((i) => i !== p.id) : [...curr, p.id])} />
+                            <span>{p.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Section: Language */}
+                  <section className="mock-name-menu-section">
+                    <span className="mock-name-menu-label">Idioma</span>
+                    <button
+                      className={`mock-name-toggle-track ${ui.lang === "it" ? "is-it" : ""}`}
+                      onClick={() => setUi((p) => ({ ...p, lang: p.lang === "it" ? "pt" : "it" }))}
+                    >
+                      <span className="mock-name-toggle-thumb" />
+                      <span className="mock-name-toggle-option">PT</span>
+                      <span className="mock-name-toggle-option">IT</span>
+                    </button>
                   </section>
                 </div>
               )}
