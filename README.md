@@ -22,6 +22,49 @@ Aplicação web para criação de árvores familiares profissionais para process
 - `frontend/`: interface web separada
 - `docker-compose.yml`: ambiente local completo
 
+## Arquitetura
+```text
+                                   +----------------------+
+                                   |   Browser (React)    |
+                                   | frontend (Vite + TS) |
+                                   +----------+-----------+
+                                              |
+                                              | HTTP/JSON + JWT
+                                              v
++-----------------------+          +----------+-----------+
+|   Mock mode (Pages)   |          |   FastAPI Backend    |
+| MockPreviewPage.tsx   |          |   /api/v1/* routes   |
++-----------+-----------+          +----------+-----------+
+            |                                 |
+            | (sem API)                       | SQLAlchemy ORM
+            |                                 v
+            |                      +----------+-----------+
+            |                      |    PostgreSQL DB     |
+            |                      | (docker: family_tree)|
+            |                      +----------------------+
+            |
+            |                                 +--------------------------+
+            |                                 | Services (backend/app/)  |
+            |                                 | - graph.py (ciclos)      |
+            |                                 | - layout.py (preview)    |
+            |                                 | - export.py (HTML->PDF)  |
+            |                                 +------------+-------------+
+            |                                              |
+            |                                              | Jinja2 + WeasyPrint
+            |                                              v
+            |                                 +------------+-------------+
+            |                                 |  /app/exports (volume)   |
+            +-------------------------------->| PDFs para download        |
+                                              +--------------------------+
+```
+
+Fluxo principal:
+1. Frontend autentica em `/api/v1/auth/login` e guarda JWT.
+2. CRUD de casos/pessoas/relacionamentos passa pelo backend e persiste no PostgreSQL.
+3. `GET /cases/{id}/preview` usa `layout.py` para gerar coordenadas da árvore.
+4. `POST /cases/{id}/export/pdf` renderiza HTML (`templates/tree.html`) e gera PDF com WeasyPrint.
+5. Frontend baixa arquivo por `GET /api/v1/exports/{export_id}/download`.
+
 ## Rodar local com Docker (recomendado)
 
 ### Pré-requisitos

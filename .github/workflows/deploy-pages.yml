@@ -2,11 +2,10 @@ name: Deploy Mock Preview to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - "frontend/**"
-      - ".github/workflows/deploy-pages.yml"
+      - frontend/**
+      - .github/workflows/deploy-pages.yml
   workflow_dispatch:
 
 permissions:
@@ -18,9 +17,13 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: &runner ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,11 +36,9 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
 
       - name: Build static mock preview
-        working-directory: frontend
         run: npm run build:mock
 
       - name: Configure GitHub Pages
@@ -52,7 +53,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: *runner
     needs: build
     steps:
       - name: Deploy to GitHub Pages
