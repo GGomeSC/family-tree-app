@@ -11,6 +11,18 @@ type MockPerson = (typeof mockLayoutPreview.persons)[number];
 
 type ZoomMode = "auto" | "manual";
 type NameDisplayMode = "first-first" | "last-first";
+type LegendLanguage = "pt" | "it";
+
+const LEGEND_LABELS: Record<LegendLanguage, { lineage: string; spouse: string }> = {
+  pt: {
+    lineage: "Linha de descendência",
+    spouse: "Cônjuge",
+  },
+  it: {
+    lineage: "Linea di discendenza",
+    spouse: "Coniugi",
+  },
+};
 
 interface PersonRelations {
   spouses: number[];
@@ -141,6 +153,7 @@ export function MockPreviewPage() {
     () => mockLayoutPreview.persons.map((person) => person.id)
   );
   const [isNameMenuOpen, setIsNameMenuOpen] = useState(false);
+  const [legendLanguage, setLegendLanguage] = useState<LegendLanguage>("pt");
   const [userZoomFactor, setUserZoomFactor] = useState(1);
   const [availableWidth, setAvailableWidth] = useState(0);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= MOBILE_BREAKPOINT);
@@ -281,6 +294,10 @@ export function MockPreviewPage() {
     setIsNameMenuOpen((current) => !current);
   }
 
+  function toggleLegendLanguage() {
+    setLegendLanguage((current) => (current === "pt" ? "it" : "pt"));
+  }
+
   function toggleNameTargetPerson(personId: number) {
     setNameTargetPersonIds((current) =>
       current.includes(personId) ? current.filter((id) => id !== personId) : [...current, personId]
@@ -357,6 +374,25 @@ export function MockPreviewPage() {
                     </div>
                   </section>
                   <section className="mock-name-menu-section">
+                    <span className="mock-name-menu-label">Idioma da legenda</span>
+                    <div className="mock-name-toggle">
+                      <button
+                        type="button"
+                        className={`mock-name-toggle-track ${
+                          legendLanguage === "it" ? "is-it" : ""
+                        }`}
+                        role="switch"
+                        aria-checked={legendLanguage === "it"}
+                        aria-label="Alternar idioma da legenda entre português e italiano"
+                        onClick={toggleLegendLanguage}
+                      >
+                        <span className="mock-name-toggle-thumb" aria-hidden="true" />
+                        <span className="mock-name-toggle-option">PT</span>
+                        <span className="mock-name-toggle-option">IT</span>
+                      </button>
+                    </div>
+                  </section>
+                  <section className="mock-name-menu-section">
                     <span className="mock-name-menu-label">Aplicar em</span>
                     <div className="mock-name-node-list">
                       {nameTargetCandidates.map((person) => (
@@ -377,6 +413,16 @@ export function MockPreviewPage() {
           </div>
 
           <div ref={treeHostRef} className="mock-tree-stage">
+            <div className="mock-preview-legend" aria-hidden="true">
+              <div className="mock-preview-legend-item">
+                <span className="mock-preview-legend-swatch lineage" />
+                <span className="mock-preview-legend-text">{LEGEND_LABELS[legendLanguage].lineage}</span>
+              </div>
+              <div className="mock-preview-legend-item">
+                <span className="mock-preview-legend-swatch spouse" />
+                <span className="mock-preview-legend-text">{LEGEND_LABELS[legendLanguage].spouse}</span>
+              </div>
+            </div>
             <HierarchyPreview
               preview={mockLayoutPreview}
               selectedPersonId={selectedPersonId}

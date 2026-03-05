@@ -238,7 +238,52 @@ button {
 }
 
 .mock-tree-stage {
+  position: relative;
   width: 100%;
+}
+
+.mock-preview-legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 12;
+  pointer-events: none;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(244, 248, 251, 0.95);
+  border: 1px solid #d7e3ed;
+  box-shadow: 0 3px 10px rgba(10, 28, 45, 0.15);
+}
+
+.mock-preview-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mock-preview-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(10, 28, 45, 0.25);
+  flex-shrink: 0;
+}
+
+.mock-preview-legend-swatch.lineage {
+  background: #1b6690;
+}
+
+.mock-preview-legend-swatch.spouse {
+  background: #2597c9;
+}
+
+.mock-preview-legend-text {
+  color: #16344a;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 600;
 }
 
 .mock-controls {
@@ -336,6 +381,10 @@ button {
   transform: translateX(100%);
 }
 
+.mock-name-toggle-track.is-it .mock-name-toggle-thumb {
+  transform: translateX(100%);
+}
+
 .mock-name-toggle-option {
   position: relative;
   z-index: 1;
@@ -355,6 +404,14 @@ button {
 }
 
 .mock-name-toggle-track.is-last-first .mock-name-toggle-option:last-of-type {
+  color: #fff;
+}
+
+.mock-name-toggle-track.is-it .mock-name-toggle-option:first-of-type {
+  color: #27465b;
+}
+
+.mock-name-toggle-track.is-it .mock-name-toggle-option:last-of-type {
   color: #fff;
 }
 
@@ -508,6 +565,17 @@ button {
 @media (max-width: 900px) {
   .container.mock-wide {
     width: min(1200px, 96vw);
+  }
+
+  .mock-preview-legend {
+    top: 8px;
+    right: 8px;
+    padding: 8px 10px;
+    gap: 5px;
+  }
+
+  .mock-preview-legend-text {
+    font-size: 12px;
   }
 
   .mock-name-menu {
