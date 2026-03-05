@@ -1,0 +1,8 @@
+export const LAYOUT = {
+  NODE_WIDTH: 220,
+  NODE_HEIGHT: 96,
+  PAD_X: 64,
+  PAD_Y: 44,
+  MIN_TREE_WIDTH: 860,
+  MOBILE_BREAKPOINT: 900,
+};

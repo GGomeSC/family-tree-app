@@ -1,56 +1,12 @@
 import { LayoutEdge, LayoutPerson, LayoutPreview, LayoutUnion } from "../types";
+import { LAYOUT } from "../config/layout";
+import { formatDate, formatNodeName, NameDisplayMode } from "../utils/formatters";
 
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 96;
-const PAD_X = 64;
-const PAD_Y = 44;
+const { NODE_WIDTH, NODE_HEIGHT, PAD_X, PAD_Y } = LAYOUT;
 
-function nodeCenterTop(node: LayoutPerson) {
-  return { x: node.x + NODE_WIDTH / 2 + PAD_X, y: node.y + PAD_Y };
-}
-
-function nodeCenterBottom(node: LayoutPerson) {
-  return { x: node.x + NODE_WIDTH / 2 + PAD_X, y: node.y + NODE_HEIGHT + PAD_Y };
-}
-
-function formatDate(value: string) {
-  const [y, m, d] = value.split("-");
-  if (!y || !m || !d) return value;
-  return `${d}/${m}/${y}`;
-}
-
-type NameDisplayMode = "first-first" | "last-first";
-
-function formatNodeName(value: string, nameDisplayMode: NameDisplayMode) {
-  const normalized = value.trim().replace(/\s+/g, " ");
-  if (!normalized) {
-    return { firstName: "Pessoa", restName: "sem nome" };
-  }
-
-  const parts = normalized.split(" ");
-  if (parts.length === 1) {
-    return {
-      firstName: parts[0],
-      restName: "",
-    };
-  }
-
-  if (nameDisplayMode === "last-first") {
-    return {
-      firstName: parts[parts.length - 1],
-      restName: parts.slice(0, -1).join(" "),
-    };
-  }
-
-  return {
-    firstName: parts[0],
-    restName: parts.slice(1).join(" "),
-  };
-}
-
-function edgeKey(edge: LayoutEdge) {
-  return `${edge.from_id}-${edge.to_id}-${edge.via_union_id ?? "direct"}`;
-}
+const nodeCenterTop = (node: LayoutPerson) => ({ x: node.x + NODE_WIDTH / 2 + PAD_X, y: node.y + PAD_Y });
+const nodeCenterBottom = (node: LayoutPerson) => ({ x: node.x + NODE_WIDTH / 2 + PAD_X, y: node.y + NODE_HEIGHT + PAD_Y });
+const edgeKey = (e: LayoutEdge) => `${e.from_id}-${e.to_id}-${e.via_union_id ?? "direct"}`;
 
 interface HierarchyPreviewProps {
   preview: LayoutPreview;
@@ -71,135 +27,87 @@ export function HierarchyPreview({
   nameDisplayMode = "first-first",
   nameTargetPersonIds = [],
 }: HierarchyPreviewProps) {
-  const byId = new Map<number, LayoutPerson>(preview.persons.map((p) => [p.id, p]));
-  const unionsById = new Map<number, LayoutUnion>(preview.unions.map((u) => [u.id, u]));
+  const byId = new Map(preview.persons.map((p) => [p.id, p]));
+  const unionsById = new Map(preview.unions.map((u) => [u.id, u]));
+  const targetSet = new Set(nameTargetPersonIds);
 
-  const maxX = preview.persons.reduce((acc, person) => Math.max(acc, person.x), 0);
-  const maxY = preview.persons.reduce((acc, person) => Math.max(acc, person.y), 0);
-  const targetSet = new Set<number>(nameTargetPersonIds);
+  const maxX = preview.persons.reduce((acc, p) => Math.max(acc, p.x), 0);
+  const maxY = preview.persons.reduce((acc, p) => Math.max(acc, p.y), 0);
 
-  const width = Math.max(maxX + NODE_WIDTH + PAD_X * 2, 860);
+  const width = Math.max(maxX + NODE_WIDTH + PAD_X * 2, LAYOUT.MIN_TREE_WIDTH);
   const height = Math.max(maxY + NODE_HEIGHT + PAD_Y * 2, 260);
-  const normalizedScale = Math.max(0.5, Math.min(2, scale));
-  const scaledWidth = Math.round(width * normalizedScale);
-  const scaledHeight = Math.round(height * normalizedScale);
+  const s = Math.max(0.5, Math.min(2, scale));
 
   return (
     <div className={`hierarchy-scroll ${overflowMode === "fit" ? "hierarchy-scroll-fit" : ""}`}>
-      <div className="hierarchy-scale-shell" style={{ width: `${scaledWidth}px`, height: `${scaledHeight}px` }}>
+      <div className="hierarchy-scale-shell" style={{ width: `${Math.round(width * s)}px`, height: `${Math.round(height * s)}px` }}>
         <div
           className="hierarchy-canvas"
-          style={{
-            width: `${width}px`,
-            height: `${height}px`,
-            transform: `scale(${normalizedScale})`,
-            transformOrigin: "top left",
-          }}
+          style={{ width: `${width}px`, height: `${height}px`, transform: `scale(${s})`, transformOrigin: "top left" }}
         >
           <svg className="hierarchy-lines" viewBox={`0 0 ${width} ${height}`}>
-            {preview.unions.map((union) => {
-              const a = byId.get(union.partner_a_person_id);
-              const b = byId.get(union.partner_b_person_id);
+            {preview.unions.map((u) => {
+              const [a, b] = [byId.get(u.partner_a_person_id), byId.get(u.partner_b_person_id)];
               if (!a || !b) return null;
-
-              const aCenter = nodeCenterTop(a);
-              const bCenter = nodeCenterTop(b);
-              const midX = (aCenter.x + bCenter.x) / 2;
-              const midY = aCenter.y + 16;
-
+              const [ac, bc] = [nodeCenterTop(a), nodeCenterTop(b)];
               return (
-                <g key={`union-${union.id}`}>
-                  <line
-                    x1={aCenter.x}
-                    y1={aCenter.y + 12}
-                    x2={bCenter.x}
-                    y2={bCenter.y + 12}
-                    className="line spouse"
-                  />
-                  {union.marriage_date && (
-                    <text x={midX} y={midY - 6} className="marriage-date" textAnchor="middle">
-                      {formatDate(union.marriage_date)}
+                <g key={`union-${u.id}`}>
+                  <line x1={ac.x} y1={ac.y + 12} x2={bc.x} y2={bc.y + 12} className="line spouse" />
+                  {u.marriage_date && (
+                    <text x={(ac.x + bc.x) / 2} y={ac.y + 10} className="marriage-date" textAnchor="middle">
+                      {formatDate(u.marriage_date)}
                     </text>
                   )}
                 </g>
               );
             })}
 
-            {preview.edges.map((edge) => {
-              const from = byId.get(edge.from_id);
-              const to = byId.get(edge.to_id);
-              if (!from || !to) return null;
-
+            {preview.edges.map((e) => {
+              const to = byId.get(e.to_id);
+              if (!to) return null;
               const toTop = nodeCenterTop(to);
 
-              if (edge.via_union_id) {
-                const union = unionsById.get(edge.via_union_id);
-                if (!union) return null;
-                const partnerA = byId.get(union.partner_a_person_id);
-                const partnerB = byId.get(union.partner_b_person_id);
-                if (!partnerA || !partnerB) return null;
-
-                const aCenter = nodeCenterTop(partnerA);
-                const bCenter = nodeCenterTop(partnerB);
-                const midX = (aCenter.x + bCenter.x) / 2;
-                const startY = aCenter.y + 12;
+              if (e.via_union_id) {
+                const u = unionsById.get(e.via_union_id);
+                const [pA, pB] = [byId.get(u?.partner_a_person_id ?? -1), byId.get(u?.partner_b_person_id ?? -1)];
+                if (!pA || !pB) return null;
+                const midX = (nodeCenterTop(pA).x + nodeCenterTop(pB).x) / 2;
+                const midY = nodeCenterTop(pA).y + 12;
                 const bridgeY = toTop.y - 18;
-
                 return (
-                  <g key={`edge-${edgeKey(edge)}`}>
-                    <line x1={midX} y1={startY} x2={midX} y2={bridgeY} className="line lineage" />
-                    <line x1={midX} y1={bridgeY} x2={toTop.x} y2={bridgeY} className="line lineage" />
-                    <line x1={toTop.x} y1={bridgeY} x2={toTop.x} y2={toTop.y} className="line lineage" />
-                  </g>
+                  <path
+                    key={`edge-${edgeKey(e)}`}
+                    d={`M ${midX} ${midY} V ${bridgeY} H ${toTop.x} V ${toTop.y}`}
+                    className="line lineage"
+                    fill="none"
+                  />
                 );
               }
 
-              const fromBottom = nodeCenterBottom(from);
-              return (
-                <line
-                  key={`edge-${edgeKey(edge)}`}
-                  x1={fromBottom.x}
-                  y1={fromBottom.y}
-                  x2={toTop.x}
-                  y2={toTop.y}
-                  className="line lineage"
-                />
-              );
+              const from = byId.get(e.from_id);
+              if (!from) return null;
+              const fb = nodeCenterBottom(from);
+              return <line key={`edge-${edgeKey(e)}`} x1={fb.x} y1={fb.y} x2={toTop.x} y2={toTop.y} className="line lineage" />;
             })}
           </svg>
 
-          {preview.persons.map((person) => {
-            const effectiveNameDisplayMode = targetSet.has(person.id) ? nameDisplayMode : "first-first";
-            const formattedName = formatNodeName(person.name, effectiveNameDisplayMode);
-
+          {preview.persons.map((p) => {
+            const fmt = formatNodeName(p.name, targetSet.has(p.id) ? nameDisplayMode : "first-first");
             return (
               <article
-                key={person.id}
-                className={`hierarchy-node ${person.role} ${
-                  selectedPersonId === person.id ? "selected" : ""
-                } ${onSelectPerson ? "clickable" : ""}`}
-                style={{ left: `${person.x + PAD_X}px`, top: `${person.y + PAD_Y}px` }}
-                onClick={onSelectPerson ? () => onSelectPerson(person.id) : undefined}
-                onKeyDown={
-                  onSelectPerson
-                    ? (event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          onSelectPerson(person.id);
-                        }
-                      }
-                    : undefined
-                }
+                key={p.id}
+                className={`hierarchy-node ${p.role} ${selectedPersonId === p.id ? "selected" : ""} ${onSelectPerson ? "clickable" : ""}`}
+                style={{ left: `${p.x + PAD_X}px`, top: `${p.y + PAD_Y}px` }}
+                onClick={onSelectPerson ? () => onSelectPerson(p.id) : undefined}
                 role={onSelectPerson ? "button" : undefined}
                 tabIndex={onSelectPerson ? 0 : undefined}
-                aria-pressed={onSelectPerson ? selectedPersonId === person.id : undefined}
               >
                 <div className="name">
-                  <span className="name-first">{formattedName.firstName}</span>
-                  {formattedName.restName && <span className="name-rest">{formattedName.restName}</span>}
+                  <span className="name-first">{fmt.firstName}</span>
+                  {fmt.restName && <span className="name-rest">{fmt.restName}</span>}
                 </div>
-                <div className="birth">{formatDate(person.birth_date)}</div>
-                {person.is_richiedente && <div className="badge">Richiedente</div>}
+                <div className="birth">{formatDate(p.birth_date)}</div>
+                {p.is_richiedente && <div className="badge">Richiedente</div>}
               </article>
             );
           })}
