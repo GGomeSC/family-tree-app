@@ -1,6 +1,6 @@
 # Family Tree App (Italian Citizenship)
 
-Aplicação web para criação de árvores familiares profissionais para processos de cidadania italiana.
+Aplicação web para criação de árvores genealógicas profissionais para processos de cidadania italiana.
 
 ## Stack
 - Backend: FastAPI + SQLAlchemy + Alembic + PostgreSQL/SQLite

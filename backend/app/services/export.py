@@ -8,11 +8,12 @@ from app.models.case import Case
 from app.schemas.preview import LayoutPreview
 from app.services.layout import BOX_H, BOX_W, PAGE_HEIGHT
 
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+
 
 def render_html(layout: LayoutPreview, case: Case) -> str:
-    templates_dir = Path(__file__).resolve().parent.parent / "templates"
     env = Environment(
-        loader=FileSystemLoader(str(templates_dir)),
+        loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(["html", "xml"]),
     )
     template = env.get_template("tree.html")
@@ -67,5 +68,5 @@ def export_pdf(html: str, case_id: int) -> str:
     except Exception as exc:
         raise RuntimeError("WeasyPrint is not installed or unavailable") from exc
 
-    HTML(string=html).write_pdf(str(output_path))
+    HTML(string=html, base_url=str(TEMPLATES_DIR)).write_pdf(str(output_path))
     return str(output_path)

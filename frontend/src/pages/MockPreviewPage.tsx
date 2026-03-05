@@ -79,7 +79,7 @@ function DetailsPanelContent({ person, byId }: { person: LayoutPerson | null; by
   const fields = [
     { label: "Nome", val: person.name },
     { label: "Nascimento", val: formatDate(person.birth_date) },
-    { label: "Tipo", val: person.role === "spouse" ? "Cônjuge" : "Linha familiar" },
+    { label: "Tipo", val: person.role === "spouse" ? "Cônjuge" : "Linhagem" },
     { label: "Richiedente", val: person.is_richiedente ? "Sim" : "Não" },
     { label: "Cônjuge(s)", val: fmt(rels?.spouses) },
     { label: "Pai/Mãe", val: fmt(rels?.parents) },

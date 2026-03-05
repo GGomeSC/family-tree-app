@@ -72,7 +72,7 @@ def download_export(
 
     _get_case_or_404(db, current_user, export.case_id)
 
-    return FileResponse(export.file_path, media_type="application/pdf", filename="arvore-familiar.pdf")
+    return FileResponse(export.file_path, media_type="application/pdf", filename="arvore-genealógica.pdf")
 
 
 @router.get("/cases/{case_id}/exports", response_model=list[ExportOut])

@@ -2,140 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <style>
-    @page {
-      size: A4 landscape;
-      margin: 12mm;
-    }
-
-    body {
-      font-family: "Georgia", serif;
-      color: #10283a;
-    }
-
-    .page {
-      page-break-after: always;
-      position: relative;
-      width: 280mm;
-      min-height: 185mm;
-      background: #f3f4f6;
-      border: 1px solid #d3d6da;
-      overflow: hidden;
-    }
-
-    .header {
-      padding: 8px 12px;
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    .legend {
-      position: absolute;
-      top: 12px;
-      right: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 12px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-box {
-      width: 16px;
-      height: 12px;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-    }
-
-    .legend-lineage {
-      background: linear-gradient(180deg, #356f94 0%, #0f5f84 100%);
-    }
-
-    .legend-spouse {
-      background: linear-gradient(180deg, #27a6d8 0%, #0d90c4 100%);
-    }
-
-    .canvas {
-      position: relative;
-      width: 100%;
-      height: 160mm;
-    }
-
-    .node {
-      position: absolute;
-      width: {{ box_w }}px;
-      height: {{ box_h }}px;
-      border-radius: 3px;
-      color: #fff;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 6px;
-      font-size: 15px;
-      line-height: 1.15;
-    }
-
-    .node.lineage {
-      background: linear-gradient(180deg, #356f94 0%, #0f5f84 100%);
-    }
-
-    .node.spouse {
-      background: linear-gradient(180deg, #27a6d8 0%, #0d90c4 100%);
-    }
-
-    .birth {
-      margin-top: 6px;
-      font-size: 13px;
-    }
-
-    .badge {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      top: 100%;
-      margin-top: 4px;
-      background: #f2f2f2;
-      color: #0b1b29;
-      border: 2px solid #1b6690;
-      padding: 2px 14px;
-      font-size: 12px;
-      border-radius: 2px;
-      white-space: nowrap;
-    }
-
-    .marriage-label {
-      position: absolute;
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1px 3px;
-      border-radius: 2px;
-    }
-
-    svg.lines {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .continuation {
-      font-size: 11px;
-      fill: #334155;
-    }
-  </style>
+  <link rel="stylesheet" href="tree.css" />
 </head>
 <body>
   {% for page in pages %}
     <section class="page">
-      <div class="header">Árvore Familiar - {{ case.title }} - Página {{ page.number + 1 }} de {{ pages|length }}</div>
+      <div class="header">Árvore Genealógica - {{ case.title }} - Página {{ page.number + 1 }} de {{ pages|length }}</div>
       {% if loop.first %}
         <div class="legend">
           <div class="legend-item"><span class="legend-box legend-lineage"></span> Linha de descendência</div>
@@ -143,7 +15,7 @@
         </div>
       {% endif %}
       <div class="canvas">
-        <svg class="lines" xmlns="http://www.w3.org/2000/svg">
+        <svg class="tree-canvas" xmlns="http://www.w3.org/2000/svg">
           {% for union in page.unions %}
             {% set pa = persons_by_id[union.partner_a_person_id] %}
             {% set pb = persons_by_id[union.partner_b_person_id] %}
@@ -175,28 +47,35 @@
               <text x="{{ to_person.x + (box_w/2) }}" y="{{ (to_person.y - page.number * page_height) - 16 }}" class="continuation">continuação da página {{ cont.from_page + 1 }}</text>
             {% endif %}
           {% endfor %}
-        </svg>
 
-        {% for union in page.unions %}
-          {% if union.marriage_date %}
-            {% set pa = persons_by_id[union.partner_a_person_id] %}
-            {% set pb = persons_by_id[union.partner_b_person_id] %}
-            {% set midx = (pa.x + pb.x + box_w) / 2 %}
-            <div class="marriage-label" style="left: {{ midx - 24 }}px; top: {{ (pa.y - page.number * page_height) + 8 }}px;">
-              {{ union.marriage_date }}
-            </div>
-          {% endif %}
-        {% endfor %}
-
-        {% for person in page.persons %}
-          <div class="node {{ person.role }}" style="left: {{ person.x }}px; top: {{ person.y - page.number * page_height }}px;">
-            <div>{{ person.name }}</div>
-            <div class="birth">{{ person.birth_date }}</div>
-            {% if person.is_richiedente %}
-              <div class="badge">Richiedente</div>
+          {% for union in page.unions %}
+            {% if union.marriage_date %}
+              {% set pa = persons_by_id[union.partner_a_person_id] %}
+              {% set pb = persons_by_id[union.partner_b_person_id] %}
+              {% set midx = (pa.x + pb.x + box_w) / 2 %}
+              <text class="marriage-label" x="{{ midx }}" y="{{ (pa.y - page.number * page_height) + 11 }}" text-anchor="middle">
+                {{ union.marriage_date }}
+              </text>
             {% endif %}
-          </div>
-        {% endfor %}
+          {% endfor %}
+
+          {% for person in page.persons %}
+            {% set node_y = person.y - page.number * page_height %}
+            <g class="node {{ person.role }}" transform="translate({{ person.x }}, {{ node_y }})">
+              <rect class="node-box" x="0" y="0" width="{{ box_w }}" height="{{ box_h }}" rx="3" ry="3" />
+              <text class="node-name" x="{{ box_w / 2 }}" y="28" text-anchor="middle" textLength="{{ box_w - 20 }}" lengthAdjust="spacingAndGlyphs">
+                {{ person.name }}
+              </text>
+              <text class="node-birth" x="{{ box_w / 2 }}" y="52" text-anchor="middle">
+                {{ person.birth_date }}
+              </text>
+              {% if person.is_richiedente %}
+                <rect class="badge-box" x="{{ (box_w - 108) / 2 }}" y="{{ box_h + 4 }}" width="108" height="20" rx="2" ry="2" />
+                <text class="badge-text" x="{{ box_w / 2 }}" y="{{ box_h + 18 }}" text-anchor="middle">Richiedente</text>
+              {% endif %}
+            </g>
+          {% endfor %}
+        </svg>
       </div>
     </section>
   {% endfor %}
