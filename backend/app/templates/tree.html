@@ -7,7 +7,7 @@
 <body>
   {% for page in pages %}
     <section class="page">
-      <div class="header">Árvore Genealógica - {{ case.title }} - Página {{ page.number + 1 }} de {{ pages|length }}</div>
+      <div class="header">Árvore Genealógica - {{ family.title }} - Página {{ page.number + 1 }} de {{ pages|length }}</div>
       {% if loop.first %}
         <div class="legend">
           <div class="legend-item"><span class="legend-box legend-lineage"></span> Linha de descendência</div>

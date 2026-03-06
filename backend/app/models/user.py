@@ -23,4 +23,4 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
-    cases = relationship("Case", back_populates="creator", foreign_keys="Case.created_by")
+    families = relationship("Family", back_populates="creator", foreign_keys="Family.created_by")

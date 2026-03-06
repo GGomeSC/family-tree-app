@@ -4,14 +4,14 @@ import uuid
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.config import settings
-from app.models.case import Case
+from app.models.family import Family
 from app.schemas.preview import LayoutPreview
 from app.services.layout import BOX_H, BOX_W, PAGE_HEIGHT
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 
 
-def render_html(layout: LayoutPreview, case: Case) -> str:
+def render_html(layout: LayoutPreview, family: Family) -> str:
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(["html", "xml"]),
@@ -47,7 +47,7 @@ def render_html(layout: LayoutPreview, case: Case) -> str:
         )
 
     return template.render(
-        case=case,
+        family=family,
         pages=pages,
         persons_by_id=persons_by_id,
         unions_by_id=unions_by_id,
@@ -57,10 +57,10 @@ def render_html(layout: LayoutPreview, case: Case) -> str:
     )
 
 
-def export_pdf(html: str, case_id: int) -> str:
+def export_pdf(html: str, family_id: int) -> str:
     output_dir = Path(settings.export_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"case_{case_id}_{uuid.uuid4().hex}.pdf"
+    filename = f"family_{family_id}_{uuid.uuid4().hex}.pdf"
     output_path = output_dir / filename
 
     try:

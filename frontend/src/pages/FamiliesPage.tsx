@@ -1,23 +1,23 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import { CaseItem } from "../types";
+import { FamilyItem } from "../types";
 
-export function CasesPage() {
-  const [cases, setCases] = useState<CaseItem[]>([]);
+export function FamiliesPage() {
+  const [families, setFamilies] = useState<FamilyItem[]>([]);
   const [form, setForm] = useState({ title: "", clientRef: "" });
   const [error, setError] = useState("");
 
-  const loadCases = () => api.listCases().then(setCases).catch((e) => setError(e.message));
-  useEffect(() => { loadCases(); }, []);
+  const loadFamilies = () => api.listFamilies().then(setFamilies).catch((e) => setError(e.message));
+  useEffect(() => { loadFamilies(); }, []);
 
   const onCreate = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     try {
-      await api.createCase(form.title, form.clientRef || undefined);
+      await api.createFamily(form.title, form.clientRef || undefined);
       setForm({ title: "", clientRef: "" });
-      loadCases();
+      loadFamilies();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -25,23 +25,23 @@ export function CasesPage() {
 
   return (
     <main className="container">
-      <h2>Casos</h2>
+      <h2>Famílias</h2>
       <form className="card row" onSubmit={onCreate}>
-        <input placeholder="Título do caso" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required />
+        <input placeholder="Título da família" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required />
         <input placeholder="Referência do cliente" value={form.clientRef} onChange={(e) => setForm((f) => ({ ...f, clientRef: e.target.value }))} />
-        <button type="submit">Novo caso</button>
+        <button type="submit">Nova família</button>
       </form>
 
       {error && <p className="error">{error}</p>}
 
       <ul className="card list">
-        {cases.map((c) => (
-          <li key={c.id}>
+        {families.map((family) => (
+          <li key={family.id}>
             <div>
-              <strong>{c.title}</strong>
-              <small>{c.status}</small>
+              <strong>{family.title}</strong>
+              <small>{family.status}</small>
             </div>
-            <Link to={`/cases/${c.id}`}>Abrir</Link>
+            <Link to={`/families/${family.id}`}>Abrir</Link>
           </li>
         ))}
       </ul>

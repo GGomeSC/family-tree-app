@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models.case import Case
 from app.models.export import Export
+from app.models.family import Family
 from app.models.person import ParentChildLink, Person, Union
 from app.models.user import User, UserRole
 from app.schemas.export import ExportOut
@@ -15,40 +15,40 @@ from app.services.layout import build_layout
 router = APIRouter()
 
 
-def _get_case_or_404(db: Session, user: User, case_id: int) -> Case:
-    query = db.query(Case)
+def _get_family_or_404(db: Session, user: User, family_id: int) -> Family:
+    query = db.query(Family)
     if user.role != UserRole.ADMIN:
-        query = query.filter(Case.created_by == user.id)
-    case = query.filter(Case.id == case_id).first()
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
-    return case
+        query = query.filter(Family.created_by == user.id)
+    family = query.filter(Family.id == family_id).first()
+    if not family:
+        raise HTTPException(status_code=404, detail="Family not found")
+    return family
 
 
-@router.post("/cases/{case_id}/export/pdf", response_model=ExportOut, status_code=status.HTTP_201_CREATED)
+@router.post("/families/{family_id}/export/pdf", response_model=ExportOut, status_code=status.HTTP_201_CREATED)
 def create_pdf_export(
-    case_id: int,
+    family_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    case = _get_case_or_404(db, current_user, case_id)
+    family = _get_family_or_404(db, current_user, family_id)
 
-    persons = db.query(Person).filter(Person.case_id == case_id).all()
-    unions = db.query(Union).filter(Union.case_id == case_id).all()
-    links = db.query(ParentChildLink).filter(ParentChildLink.case_id == case_id).all()
+    persons = db.query(Person).filter(Person.family_id == family_id).all()
+    unions = db.query(Union).filter(Union.family_id == family_id).all()
+    links = db.query(ParentChildLink).filter(ParentChildLink.family_id == family_id).all()
 
     if not persons:
-        raise HTTPException(status_code=400, detail="Case has no persons")
+        raise HTTPException(status_code=400, detail="Family has no persons")
 
     layout = build_layout(persons, unions, links)
-    html = render_html(layout, case)
+    html = render_html(layout, family)
     try:
-        file_path = export_pdf(html, case_id)
+        file_path = export_pdf(html, family_id)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     export = Export(
-        case_id=case_id,
+        family_id=family_id,
         exported_by=current_user.id,
         format="pdf",
         template_version="v1",
@@ -70,16 +70,16 @@ def download_export(
     if not export:
         raise HTTPException(status_code=404, detail="Export not found")
 
-    _get_case_or_404(db, current_user, export.case_id)
+    _get_family_or_404(db, current_user, export.family_id)
 
     return FileResponse(export.file_path, media_type="application/pdf", filename="arvore-genealógica.pdf")
 
 
-@router.get("/cases/{case_id}/exports", response_model=list[ExportOut])
+@router.get("/families/{family_id}/exports", response_model=list[ExportOut])
 def list_exports(
-    case_id: int,
+    family_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_case_or_404(db, current_user, case_id)
-    return db.query(Export).filter(Export.case_id == case_id).order_by(Export.created_at.desc()).all()
+    _get_family_or_404(db, current_user, family_id)
+    return db.query(Export).filter(Export.family_id == family_id).order_by(Export.created_at.desc()).all()

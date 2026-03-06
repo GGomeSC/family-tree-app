@@ -2,28 +2,28 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.case import CaseStatus
+from app.models.family import FamilyStatus
 
 
-class CaseCreate(BaseModel):
+class FamilyCreate(BaseModel):
     title: str
     client_reference: str | None = None
 
 
-class CaseUpdate(BaseModel):
+class FamilyUpdate(BaseModel):
     title: str | None = None
     client_reference: str | None = None
 
 
-class CaseStatusUpdate(BaseModel):
-    status: CaseStatus
+class FamilyStatusUpdate(BaseModel):
+    status: FamilyStatus
 
 
-class CaseOut(BaseModel):
+class FamilyOut(BaseModel):
     id: int
     title: str
     client_reference: str | None
-    status: CaseStatus
+    status: FamilyStatus
     created_by: int
     created_at: datetime
     updated_at: datetime

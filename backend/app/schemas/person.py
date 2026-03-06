@@ -19,7 +19,7 @@ class PersonUpdate(BaseModel):
 
 class PersonOut(BaseModel):
     id: int
-    case_id: int
+    family_id: int
     full_name: str
     birth_date: date
     is_richiedente: bool
@@ -44,7 +44,7 @@ class UnionUpdate(BaseModel):
 
 class UnionOut(BaseModel):
     id: int
-    case_id: int
+    family_id: int
     partner_a_person_id: int
     partner_b_person_id: int
     marriage_date: date | None

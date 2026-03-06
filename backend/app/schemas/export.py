@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 class ExportOut(BaseModel):
     id: int
-    case_id: int
+    family_id: int
     exported_by: int
     format: str
     template_version: str

@@ -4,9 +4,9 @@ import { api } from "../api/client";
 import { HierarchyPreview } from "../components/HierarchyPreview";
 import { ExportItem, LayoutPreview, Person } from "../types";
 
-export function EditorPage() {
-  const { caseId } = useParams();
-  const id = Number(caseId);
+export function FamilyEditorPage() {
+  const { familyId } = useParams();
+  const id = Number(familyId);
 
   const [persons, setPersons] = useState<Person[]>([]);
   const [preview, setPreview] = useState<LayoutPreview | null>(null);
@@ -24,7 +24,7 @@ export function EditorPage() {
       setExports(exps);
       if (prev) {
         setPersons(prev.persons.map((p) => ({
-          id: p.id, case_id: id, full_name: p.name, birth_date: p.birth_date, is_richiedente: p.is_richiedente, notes: null
+          id: p.id, family_id: id, full_name: p.name, birth_date: p.birth_date, is_richiedente: p.is_richiedente, notes: null
         })));
       }
     } catch (err) {
@@ -62,7 +62,7 @@ export function EditorPage() {
 
   return (
     <main className="container">
-      <h2>Editor do Caso #{id}</h2>
+      <h2>Editor da Família #{id}</h2>
       {error && <p className="error">{error}</p>}
 
       <section className="grid-two">

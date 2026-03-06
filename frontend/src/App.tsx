@@ -2,8 +2,8 @@ import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { clearToken } from "./api/client";
 import { runtimeConfig } from "./config/runtime";
 import { LoginPage } from "./pages/LoginPage";
-import { CasesPage } from "./pages/CasesPage";
-import { EditorPage } from "./pages/EditorPage";
+import { FamiliesPage } from "./pages/FamiliesPage";
+import { FamilyEditorPage } from "./pages/FamilyEditorPage";
 import { MockPreviewPage } from "./pages/MockPreviewPage";
 
 export function App() {
@@ -24,7 +24,7 @@ export function App() {
       <header className="topbar">
         <h1>Árvore Genealógica</h1>
         <nav>
-          <Link to="/cases">Casos</Link>
+          <Link to="/families">Famílias</Link>
           {hasToken && (
             <button
               type="button"
@@ -40,9 +40,9 @@ export function App() {
       </header>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/cases" element={hasToken ? <CasesPage /> : <Navigate to="/login" replace />} />
-        <Route path="/cases/:caseId" element={hasToken ? <EditorPage /> : <Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to={hasToken ? "/cases" : "/login"} replace />} />
+        <Route path="/families" element={hasToken ? <FamiliesPage /> : <Navigate to="/login" replace />} />
+        <Route path="/families/:familyId" element={hasToken ? <FamilyEditorPage /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to={hasToken ? "/families" : "/login"} replace />} />
       </Routes>
     </div>
   );

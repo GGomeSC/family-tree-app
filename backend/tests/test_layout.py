@@ -8,7 +8,7 @@ def _person(pid: int, name: str, birth: str, richiedente: bool = False) -> Perso
     now_utc = datetime.now(UTC)
     return Person(
         id=pid,
-        case_id=1,
+        family_id=1,
         full_name=name,
         birth_date=date.fromisoformat(birth),
         is_richiedente=richiedente,
@@ -26,12 +26,12 @@ def test_layout_generations_and_continuations():
         _person(4, "Filho", "1970-01-01", richiedente=True),
     ]
     unions = [
-        Union(id=1, case_id=1, partner_a_person_id=1, partner_b_person_id=2, marriage_date=None),
+        Union(id=1, family_id=1, partner_a_person_id=1, partner_b_person_id=2, marriage_date=None),
     ]
     links = [
-        ParentChildLink(id=1, case_id=1, parent_person_id=1, child_person_id=2),
-        ParentChildLink(id=2, case_id=1, parent_person_id=2, child_person_id=3),
-        ParentChildLink(id=3, case_id=1, parent_person_id=3, child_person_id=4),
+        ParentChildLink(id=1, family_id=1, parent_person_id=1, child_person_id=2),
+        ParentChildLink(id=2, family_id=1, parent_person_id=2, child_person_id=3),
+        ParentChildLink(id=3, family_id=1, parent_person_id=3, child_person_id=4),
     ]
 
     layout = build_layout(persons, unions, links)

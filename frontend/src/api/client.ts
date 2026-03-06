@@ -33,20 +33,20 @@ const post = <T>(path: string, body?: any) =>
 export const api = {
   login: (email: string, password: string) => post<{ access_token: string }>("/auth/login", { email, password }),
   me: () => request<{ name: string; email: string }>("/auth/me"),
-  listCases: () => request<any[]>("/cases"),
-  createCase: (title: string, client_reference?: string) => post<any>("/cases", { title, client_reference }),
+  listFamilies: () => request<any[]>("/families"),
+  createFamily: (title: string, client_reference?: string) => post<any>("/families", { title, client_reference }),
   
-  createPerson: (caseId: number, payload: { full_name: string; birth_date: string; is_richiedente: boolean }) =>
-    post<any>(`/cases/${caseId}/persons`, payload),
+  createPerson: (familyId: number, payload: { full_name: string; birth_date: string; is_richiedente: boolean }) =>
+    post<any>(`/families/${familyId}/persons`, payload),
     
-  createUnion: (caseId: number, payload: { partner_a_person_id: number; partner_b_person_id: number; marriage_date?: string }) =>
-    post<any>(`/cases/${caseId}/unions`, payload),
+  createUnion: (familyId: number, payload: { partner_a_person_id: number; partner_b_person_id: number; marriage_date?: string }) =>
+    post<any>(`/families/${familyId}/unions`, payload),
     
-  createParentChild: (caseId: number, payload: { parent_person_id: number; child_person_id: number }) =>
-    post<any>(`/cases/${caseId}/parent-child-links`, payload),
+  createParentChild: (familyId: number, payload: { parent_person_id: number; child_person_id: number }) =>
+    post<any>(`/families/${familyId}/parent-child-links`, payload),
     
-  preview: (caseId: number) => request<LayoutPreview>(`/cases/${caseId}/preview`),
-  exportPdf: (caseId: number) => post<any>(`/cases/${caseId}/export/pdf`),
-  listExports: (caseId: number) => request<any[]>(`/cases/${caseId}/exports`),
+  preview: (familyId: number) => request<LayoutPreview>(`/families/${familyId}/preview`),
+  exportPdf: (familyId: number) => post<any>(`/families/${familyId}/export/pdf`),
+  listExports: (familyId: number) => request<any[]>(`/families/${familyId}/exports`),
   downloadExportUrl: (exportId: number) => `${API_BASE}/exports/${exportId}/download`,
 };

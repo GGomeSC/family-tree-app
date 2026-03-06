@@ -13,7 +13,7 @@ export function LoginPage() {
     try {
       const { access_token } = await api.login(form.email, form.password);
       setToken(access_token);
-      navigate("/cases");
+      navigate("/families");
     } catch (err) {
       setError((err as Error).message);
     }

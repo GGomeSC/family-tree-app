@@ -1,10 +1,10 @@
-export type CaseStatus = "Draft" | "Reviewed" | "Exported" | "Archived";
+export type FamilyStatus = "Draft" | "Reviewed" | "Exported" | "Archived";
 
-export interface CaseItem {
+export interface FamilyItem {
   id: number;
   title: string;
   client_reference: string | null;
-  status: CaseStatus;
+  status: FamilyStatus;
   created_by: number;
   created_at: string;
   updated_at: string;
@@ -13,7 +13,7 @@ export interface CaseItem {
 
 export interface Person {
   id: number;
-  case_id: number;
+  family_id: number;
   full_name: string;
   birth_date: string;
   is_richiedente: boolean;
@@ -22,7 +22,7 @@ export interface Person {
 
 export interface UnionItem {
   id: number;
-  case_id: number;
+  family_id: number;
   partner_a_person_id: number;
   partner_b_person_id: number;
   marriage_date: string | null;
@@ -64,7 +64,7 @@ export interface LayoutPreview {
 
 export interface ExportItem {
   id: number;
-  case_id: number;
+  family_id: number;
   exported_by: number;
   format: string;
   template_version: string;
