@@ -4,8 +4,24 @@ on:
   push:
     branches: [main]
     paths:
-      - frontend/**
+      # Only run when the static mock preview or its build config can change.
       - .github/workflows/deploy-pages.yml
+      - frontend/.env.mock
+      - frontend/index.html
+      - frontend/package.json
+      - frontend/package-lock.json
+      - frontend/tsconfig.json
+      - frontend/vite.config.ts
+      - frontend/src/main.tsx
+      - frontend/src/App.tsx
+      - frontend/src/styles.css
+      - frontend/src/components/HierarchyPreview.tsx
+      - frontend/src/config/layout.ts
+      - frontend/src/config/runtime.ts
+      - frontend/src/mocks/**
+      - frontend/src/pages/MockPreviewPage.tsx
+      - frontend/src/types/index.ts
+      - frontend/src/utils/formatters.ts
   workflow_dispatch:
 
 permissions:
