@@ -79,6 +79,43 @@ npm install
 npm run dev
 ```
 
+### Database migrations
+
+Alembic exige `DATABASE_URL` explicitamente. Se a variavel nao estiver definida, `alembic upgrade head` falha antes de conectar para evitar migracoes acidentais no banco errado.
+
+Docker Compose/local stack:
+
+```bash
+cp .env.example .env
+docker compose run --rm backend alembic upgrade head
+```
+
+O valor de `DATABASE_URL` vem do arquivo `.env` na raiz. O template padrao usa o PostgreSQL do Compose:
+
+```bash
+DATABASE_URL=postgresql+psycopg2://family_tree:family_tree@db:5432/family_tree
+```
+
+Backend local fora do Docker:
+
+```bash
+cd backend
+DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/family_tree alembic upgrade head
+```
+
+Template para backend local:
+
+```bash
+DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/family_tree
+```
+
+SQLite continua suportado para fluxos locais/teste quando configurado explicitamente, mas nunca como fallback implicito para Alembic:
+
+```bash
+cd backend
+DATABASE_URL=sqlite:///./family_tree.db alembic upgrade head
+```
+
 ### Bootstrap de admin local
 
 Depois de subir os serviços, crie (ou promova) um usuário admin local com variáveis de ambiente:

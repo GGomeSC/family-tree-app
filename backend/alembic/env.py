@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import sys
 from logging.config import fileConfig
@@ -10,12 +11,26 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.core.config import settings
 from app.core.database import Base
 from app.models import export, family, person, user  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+
+
+def get_migration_database_url() -> str:
+    database_url = os.getenv("DATABASE_URL", "").strip()
+    if database_url:
+        return database_url
+
+    raise RuntimeError(
+        "Alembic migrations require the DATABASE_URL environment variable.\n"
+        "Set it before running migrations.\n"
+        "Example: DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/family_tree alembic upgrade head\n"
+        "See README.md: Database migrations."
+    )
+
+
+config.set_main_option("sqlalchemy.url", get_migration_database_url())
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
