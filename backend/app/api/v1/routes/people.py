@@ -5,26 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.models.family import Family
 from app.models.person import ParentChildLink, Person, Union
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.common import MessageResponse
 from app.schemas.person import ParentChildCreate, PersonCreate, PersonOut, PersonUpdate, UnionCreate, UnionOut, UnionUpdate
+from app.services.family_access import get_family_or_404
 from app.services.graph import detect_cycle, would_create_cycle
 
 router = APIRouter()
-
-
-def _get_family_or_404(db: Session, user: User, family_id: int, *, for_update: bool = False) -> Family:
-    query = db.query(Family)
-    if user.role != UserRole.ADMIN:
-        query = query.filter(Family.created_by == user.id)
-    if for_update:
-        query = query.with_for_update()
-    family = query.filter(Family.id == family_id).first()
-    if not family:
-        raise HTTPException(status_code=404, detail="Family not found")
-    return family
 
 
 def _assert_person_in_family(db: Session, family_id: int, person_id: int) -> Person:
@@ -41,7 +29,7 @@ def create_person(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
     person = Person(family_id=family_id, **payload.model_dump())
     db.add(person)
     db.commit()
@@ -57,7 +45,7 @@ def update_person(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
     person = _assert_person_in_family(db, family_id, person_id)
 
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -76,7 +64,7 @@ def delete_person(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
     person = _assert_person_in_family(db, family_id, person_id)
 
     db.query(Union).filter(
@@ -99,7 +87,7 @@ def create_union(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
 
     if payload.partner_a_person_id == payload.partner_b_person_id:
         raise HTTPException(status_code=400, detail="Partners must be different people")
@@ -138,7 +126,7 @@ def update_union(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
     union = db.query(Union).filter(Union.id == union_id, Union.family_id == family_id).first()
     if not union:
         raise HTTPException(status_code=404, detail="Union not found")
@@ -172,7 +160,7 @@ def delete_union(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
     union = db.query(Union).filter(Union.id == union_id, Union.family_id == family_id).first()
     if not union:
         raise HTTPException(status_code=404, detail="Union not found")
@@ -190,7 +178,7 @@ def create_parent_child_link(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        _get_family_or_404(db, current_user, family_id, for_update=True)
+        get_family_or_404(db, current_user, family_id, for_update=True)
 
         locked_people = db.query(Person).with_for_update().filter(
             Person.family_id == family_id,
@@ -239,7 +227,7 @@ def delete_parent_child_link(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _get_family_or_404(db, current_user, family_id)
+    get_family_or_404(db, current_user, family_id)
     link = db.query(ParentChildLink).filter(ParentChildLink.id == link_id, ParentChildLink.family_id == family_id).first()
     if not link:
         raise HTTPException(status_code=404, detail="Link not found")
