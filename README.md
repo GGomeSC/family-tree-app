@@ -16,6 +16,14 @@ O projeto permite autenticar usuários, organizar famílias, cadastrar pessoas e
 ### Com Docker
 
 ```bash
+# 1) Configure environment variables
+cp .env.example .env
+
+# 2) Generate a secure JWT secret
+openssl rand -hex 32
+# Paste the result into SECRET_KEY in .env
+
+# 3) Start services
 make up
 ```
 
@@ -29,6 +37,27 @@ Acesse:
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:8000/docs`
 - Healthcheck: `http://localhost:8000/health`
+
+### Variaveis de ambiente e segredos
+
+- O arquivo `.env` na raiz do projeto e usado pelo Docker Compose local.
+- Use `.env.example` como template e nunca comite segredos reais.
+- O `SECRET_KEY` deve ser unico por ambiente (dev/staging/prod).
+
+Gerar uma chave segura para JWT:
+
+```bash
+openssl rand -hex 32
+```
+
+Nota de seguranca:
+- O `SECRET_KEY` historicamente versionado no repositório esta comprometido e nao deve ser reutilizado em nenhum ambiente.
+- Ao rotacionar `SECRET_KEY`, tokens JWT antigos deixam de ser validos e os usuarios precisam autenticar novamente.
+
+Producao:
+- Injete `SECRET_KEY` via variaveis de ambiente da plataforma de deploy.
+- Alternativamente, use Docker/Kubernetes secrets ou um secrets manager (ex.: AWS Secrets Manager, Vault).
+- Nunca armazene segredos no Git, em imagens Docker, ou em arquivos versionados.
 
 ### Sem Docker
 

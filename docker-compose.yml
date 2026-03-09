@@ -21,15 +21,15 @@ services:
       context: ./backend
     container_name: family_tree_backend
     environment:
-      APP_NAME: Family Tree API
-      ENVIRONMENT: development
-      SECRET_KEY: local-dev-secret-change-in-prod
-      ACCESS_TOKEN_EXPIRE_MINUTES: 720
-      PYTHONPATH: /app
-      DATABASE_URL: postgresql+psycopg2://family_tree:family_tree@db:5432/family_tree
-      ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
-      ALLOWED_ORIGIN_REGEX: http://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|192\.168\.\d+\.\d+):5173
-      EXPORT_DIR: /app/exports
+      APP_NAME: ${APP_NAME:-Family Tree API}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      SECRET_KEY: ${SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-720}
+      PYTHONPATH: ${PYTHONPATH:-/app}
+      DATABASE_URL: ${DATABASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      ALLOWED_ORIGIN_REGEX: ${ALLOWED_ORIGIN_REGEX:-http://(localhost|127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+|172\\.(1[6-9]|2\\d|3[0-1])\\.\\d+\\.\\d+|192\\.168\\.\\d+\\.\\d+):5173}
+      EXPORT_DIR: ${EXPORT_DIR:-/app/exports}
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +43,7 @@ services:
       context: ./frontend
     container_name: family_tree_frontend
     environment:
-      VITE_API_URL: http://localhost:8000/api/v1
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
     depends_on:
       - backend
     ports:
