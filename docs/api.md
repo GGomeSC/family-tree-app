@@ -101,7 +101,9 @@
 
 ### Estrutura resumida de exportação
 
-- `ExportOut`: `id`, `family_id`, `exported_by`, `format`, `template_version`, `file_path`, `created_at`
+- `ExportOut`: `id`, `created_at`
+- Campos seguros para clientes: `id`, `created_at`
+- Campo interno (não exposto em respostas): `file_path`
 
 ## Endpoint auxiliar
 

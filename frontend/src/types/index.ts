@@ -64,10 +64,5 @@ export interface LayoutPreview {
 
 export interface ExportItem {
   id: number;
-  family_id: number;
-  exported_by: number;
-  format: string;
-  template_version: string;
-  file_path: string;
   created_at: string;
 }

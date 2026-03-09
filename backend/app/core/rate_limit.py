@@ -18,7 +18,8 @@ def _default_retry_after_seconds() -> int:
 
 
 def _resolve_retry_after(exc: RateLimitExceeded) -> int:
-    header_value = getattr(exc, "headers", {}).get("Retry-After")
+    headers = getattr(exc, "headers", None) or {}
+    header_value = headers.get("Retry-After")
     if header_value and str(header_value).isdigit():
         return max(int(header_value), 1)
     return _default_retry_after_seconds()
