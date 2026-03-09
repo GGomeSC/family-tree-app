@@ -2,6 +2,13 @@ from dataclasses import dataclass
 import os
 
 
+def _get_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass
 class Settings:
     app_name: str = os.getenv("APP_NAME", "Family Tree API")
@@ -15,6 +22,10 @@ class Settings:
     allowed_origins: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     allowed_origin_regex: str = os.getenv("ALLOWED_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|192\.168\.\d+\.\d+):5173")
     export_dir: str = os.getenv("EXPORT_DIR", "./exports")
+    auth_cookie_name: str = os.getenv("AUTH_COOKIE_NAME", "access_token")
+    auth_cookie_secure: bool = _get_bool("AUTH_COOKIE_SECURE", True)
+    auth_cookie_samesite: str = os.getenv("AUTH_COOKIE_SAMESITE", "strict")
+    auth_cookie_path: str = os.getenv("AUTH_COOKIE_PATH", "/")
     bootstrap_admin_email: str = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "")
     bootstrap_admin_password: str = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "")
     bootstrap_admin_name: str = os.getenv("BOOTSTRAP_ADMIN_NAME", "")

@@ -1,8 +1,12 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, setToken } from "../api/client";
+import { api } from "../api/client";
 
-export function LoginPage() {
+type LoginPageProps = {
+  onLoginSuccess?: () => void;
+};
+
+export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -11,8 +15,8 @@ export function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const { access_token } = await api.login(form.email, form.password);
-      setToken(access_token);
+      await api.login(form.email, form.password);
+      onLoginSuccess?.();
       navigate("/families");
     } catch (err) {
       setError((err as Error).message);

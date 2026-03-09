@@ -1,30 +1,67 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.deps import get_current_user
 from app.core.security import create_access_token, verify_password
 from app.models.user import User
-from app.schemas.auth import LoginRequest, TokenResponse
+from app.schemas.auth import LoginRequest
 from app.schemas.common import MessageResponse
 from app.schemas.user import UserOut
 
 router = APIRouter()
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+def _set_auth_cookie(response: Response, token: str) -> None:
+    max_age = settings.access_token_expire_minutes * 60
+    response.set_cookie(
+        key=settings.auth_cookie_name,
+        value=token,
+        httponly=True,
+        secure=settings.auth_cookie_secure,
+        samesite=settings.auth_cookie_samesite,
+        max_age=max_age,
+        path=settings.auth_cookie_path,
+    )
+
+
+def _clear_auth_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.auth_cookie_name,
+        httponly=True,
+        secure=settings.auth_cookie_secure,
+        samesite=settings.auth_cookie_samesite,
+        path=settings.auth_cookie_path,
+    )
+
+
+@router.post("/login", response_model=MessageResponse)
+def login(payload: LoginRequest, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email, User.is_active.is_(True)).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    token = create_access_token(user.id)
-    return TokenResponse(access_token=token)
+    token = create_access_token(user.id, expires_delta=timedelta(minutes=settings.access_token_expire_minutes))
+    _set_auth_cookie(response, token)
+    return MessageResponse(message="Login successful")
 
 
 @router.post("/logout", response_model=MessageResponse)
-def logout(_: User = Depends(get_current_user)):
-    return MessageResponse(message="Logout realizado. Remova o token no cliente.")
+def logout(response: Response):
+    _clear_auth_cookie(response)
+    return MessageResponse(message="Logout successful")
+
+
+@router.post("/refresh", response_model=MessageResponse)
+def refresh_token(response: Response, current_user: User = Depends(get_current_user)):
+    token = create_access_token(
+        current_user.id, expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    )
+    _set_auth_cookie(response, token)
+    return MessageResponse(message="Token refreshed")
 
 
 @router.get("/me", response_model=UserOut)

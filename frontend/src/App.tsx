@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { clearToken } from "./api/client";
+import { api } from "./api/client";
 import { runtimeConfig } from "./config/runtime";
 import { LoginPage } from "./pages/LoginPage";
 import { FamiliesPage } from "./pages/FamiliesPage";
@@ -8,6 +9,25 @@ import { MockPreviewPage } from "./pages/MockPreviewPage";
 
 export function App() {
   const navigate = useNavigate();
+  const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous">("loading");
+
+  useEffect(() => {
+    if (runtimeConfig.appMode === "mock") {
+      return;
+    }
+    let isMounted = true;
+    api
+      .me()
+      .then(() => {
+        if (isMounted) setAuthState("authenticated");
+      })
+      .catch(() => {
+        if (isMounted) setAuthState("anonymous");
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (runtimeConfig.appMode === "mock") {
     return (
@@ -17,7 +37,17 @@ export function App() {
     );
   }
 
-  const hasToken = Boolean(localStorage.getItem("token"));
+  const isAuthenticated = authState === "authenticated";
+
+  if (authState === "loading") {
+    return (
+      <div>
+        <header className="topbar">
+          <h1>Árvore Genealógica</h1>
+        </header>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -25,11 +55,12 @@ export function App() {
         <h1>Árvore Genealógica</h1>
         <nav>
           <Link to="/families">Famílias</Link>
-          {hasToken && (
+          {isAuthenticated && (
             <button
               type="button"
-              onClick={() => {
-                clearToken();
+              onClick={async () => {
+                await api.logout().catch(() => undefined);
+                setAuthState("anonymous");
                 navigate("/login");
               }}
             >
@@ -39,10 +70,19 @@ export function App() {
         </nav>
       </header>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/families" element={hasToken ? <FamiliesPage /> : <Navigate to="/login" replace />} />
-        <Route path="/families/:familyId" element={hasToken ? <FamilyEditorPage /> : <Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to={hasToken ? "/families" : "/login"} replace />} />
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/families" replace />
+            ) : (
+              <LoginPage onLoginSuccess={() => setAuthState("authenticated")} />
+            )
+          }
+        />
+        <Route path="/families" element={isAuthenticated ? <FamiliesPage /> : <Navigate to="/login" replace />} />
+        <Route path="/families/:familyId" element={isAuthenticated ? <FamilyEditorPage /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/families" : "/login"} replace />} />
       </Routes>
     </div>
   );

@@ -2,24 +2,26 @@ import { LayoutPreview } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 
-let token = localStorage.getItem("token") ?? "";
-
-export function setToken(value: string) {
-  token = value;
-  localStorage.setItem("token", value);
-}
-
-export function clearToken() {
-  token = "";
-  localStorage.removeItem("token");
-}
-
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, retryOnAuthFailure = true): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: "include" });
+  if (
+    response.status === 401 &&
+    retryOnAuthFailure &&
+    path !== "/auth/login" &&
+    path !== "/auth/refresh"
+  ) {
+    const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (refreshResponse.ok) {
+      return request<T>(path, options, false);
+    }
+  }
+
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
     throw new Error(payload.detail ?? "Erro na API");
@@ -31,7 +33,8 @@ const post = <T>(path: string, body?: any) =>
   request<T>(path, { method: "POST", ...(body && { body: JSON.stringify(body) }) });
 
 export const api = {
-  login: (email: string, password: string) => post<{ access_token: string }>("/auth/login", { email, password }),
+  login: (email: string, password: string) => post<{ message: string }>("/auth/login", { email, password }),
+  logout: () => post<{ message: string }>("/auth/logout"),
   me: () => request<{ name: string; email: string }>("/auth/me"),
   listFamilies: () => request<any[]>("/families"),
   createFamily: (title: string, client_reference?: string) => post<any>("/families", { title, client_reference }),

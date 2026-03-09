@@ -1,4 +1,4 @@
-from app.schemas.auth import LoginRequest, TokenResponse
+from app.schemas.auth import LoginRequest
 from app.schemas.common import MessageResponse
 from app.schemas.export import ExportOut
 from app.schemas.family import FamilyCreate, FamilyOut, FamilyStatusUpdate, FamilyUpdate
@@ -19,7 +19,6 @@ __all__ = [
     "PersonCreate",
     "PersonOut",
     "PersonUpdate",
-    "TokenResponse",
     "UnionCreate",
     "UnionOut",
     "UnionUpdate",
