@@ -69,14 +69,16 @@
 
 | Método e rota | Autenticação | Papel | Finalidade | Payload resumido | Resposta resumida | Erros e regras |
 | --- | --- | --- | --- | --- | --- | --- |
-| `POST /families/{family_id}/parent-child-links` | Sim | `admin` ou `staff` | Criar vínculo parental | `parent_person_id`, `child_person_id` | `message` | `400` se pessoa não pertencer à família; `400` se criar ciclo; `409` se vínculo já existir |
+| `POST /families/{family_id}/parent-child-links` | Sim | `admin` ou `staff` | Criar vínculo parental | `parent_person_id`, `child_person_id` | `message` | `400` se pessoa não pertencer à família; `400` se criar ciclo; `409` se vínculo já existir; usa transação única com bloqueio pessimista por família |
 | `DELETE /families/{family_id}/parent-child-links/{link_id}` | Sim | `admin` ou `staff` | Remover vínculo parental | Sem body | `message` | `404` se vínculo não existir |
 
 ### Regras relevantes de integridade
 
 - Pessoas referenciadas em uniões e vínculos devem pertencer à mesma família da rota.
-- O sistema impede vínculo com ciclo usando verificação prévia e checagem adicional após a persistência.
+- O sistema impede vínculo com ciclo em uma única transação: bloqueia a família e as pessoas envolvidas, valida o novo arco e só então confirma a persistência.
 - Uniões e vínculos pai/mãe-filho possuem restrição de unicidade por família.
+- A garantia forte contra ciclos concorrentes depende de suporte a row locking do PostgreSQL. Em PostgreSQL, `READ COMMITTED` é suficiente porque o bloqueio da família serializa criações concorrentes de vínculo na mesma árvore.
+- Uma alternativa com constraint/trigger recursivo no banco é possível em PostgreSQL, mas está fora de escopo porque o bloqueio aplicado na camada da aplicação já fecha a janela TOCTOU sem quebrar o fluxo SQLite local.
 
 ## Preview
 
