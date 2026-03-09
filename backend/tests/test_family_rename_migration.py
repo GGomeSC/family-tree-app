@@ -202,3 +202,97 @@ def test_rename_case_schema_to_family_preserves_existing_data(tmp_path: Path):
         ).mappings().one()
         assert export_row["family_id"] == 1
         assert export_row["file_path"] == "/tmp/family.pdf"
+
+
+def test_normalize_export_file_paths_to_filename_only(tmp_path: Path):
+    initial = _load_revision("0001_initial.py", "migration_0001_initial_normalize")
+    rename = _load_revision("0002_rename_cases_to_families.py", "migration_0002_rename_cases_to_families_normalize")
+    normalize = _load_revision("0003_normalize_export_file_paths.py", "migration_0003_normalize_export_file_paths")
+
+    db_path = tmp_path / "family-migration-normalize.sqlite"
+    engine = sa.create_engine(f"sqlite:///{db_path}")
+    now = datetime.now(UTC).isoformat()
+
+    with engine.begin() as connection:
+        _run_upgrade(connection, initial)
+        _run_upgrade(connection, rename)
+
+        connection.execute(
+            sa.text(
+                """
+                INSERT INTO users (id, name, email, password_hash, role, is_active, created_at)
+                VALUES (:id, :name, :email, :password_hash, :role, :is_active, :created_at)
+                """
+            ),
+            {
+                "id": 1,
+                "name": "Admin",
+                "email": "admin@example.com",
+                "password_hash": "hashed",
+                "role": "ADMIN",
+                "is_active": True,
+                "created_at": now,
+            },
+        )
+        connection.execute(
+            sa.text(
+                """
+                INSERT INTO families (id, title, client_reference, status, created_by, created_at, updated_at, archived_at)
+                VALUES (:id, :title, :client_reference, :status, :created_by, :created_at, :updated_at, :archived_at)
+                """
+            ),
+            {
+                "id": 1,
+                "title": "Família Bianchi",
+                "client_reference": "CLI-002",
+                "status": "DRAFT",
+                "created_by": 1,
+                "created_at": now,
+                "updated_at": now,
+                "archived_at": None,
+            },
+        )
+        connection.execute(
+            sa.text(
+                """
+                INSERT INTO exports (id, family_id, exported_by, format, template_version, file_path, created_at)
+                VALUES (:id, :family_id, :exported_by, :format, :template_version, :file_path, :created_at)
+                """
+            ),
+            [
+                {
+                    "id": 1,
+                    "family_id": 1,
+                    "exported_by": 1,
+                    "format": "pdf",
+                    "template_version": "v1",
+                    "file_path": "/tmp/family_1.pdf",
+                    "created_at": now,
+                },
+                {
+                    "id": 2,
+                    "family_id": 1,
+                    "exported_by": 1,
+                    "format": "pdf",
+                    "template_version": "v1",
+                    "file_path": r"C:\exports\family_2.pdf",
+                    "created_at": now,
+                },
+                {
+                    "id": 3,
+                    "family_id": 1,
+                    "exported_by": 1,
+                    "format": "pdf",
+                    "template_version": "v1",
+                    "file_path": "family_3.pdf",
+                    "created_at": now,
+                },
+            ],
+        )
+
+        _run_upgrade(connection, normalize)
+
+        rows = connection.execute(sa.text("SELECT id, file_path FROM exports ORDER BY id")).mappings().all()
+        assert rows[0]["file_path"] == "family_1.pdf"
+        assert rows[1]["file_path"] == "family_2.pdf"
+        assert rows[2]["file_path"] == "family_3.pdf"

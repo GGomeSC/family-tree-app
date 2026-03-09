@@ -9,7 +9,7 @@ from app.models.family import Family
 from app.models.person import ParentChildLink, Person, Union
 from app.models.user import User, UserRole
 from app.schemas.export import ExportOut
-from app.services.export import export_pdf, render_html
+from app.services.export import export_pdf, render_html, resolve_export_file_path
 from app.services.layout import build_layout
 
 router = APIRouter()
@@ -43,7 +43,7 @@ def create_pdf_export(
     layout = build_layout(persons, unions, links)
     html = render_html(layout, family)
     try:
-        file_path = export_pdf(html, family_id)
+        file_name = export_pdf(html, family_id)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -52,7 +52,7 @@ def create_pdf_export(
         exported_by=current_user.id,
         format="pdf",
         template_version="v1",
-        file_path=file_path,
+        file_path=file_name,
     )
     db.add(export)
     db.commit()
@@ -72,7 +72,8 @@ def download_export(
 
     _get_family_or_404(db, current_user, export.family_id)
 
-    return FileResponse(export.file_path, media_type="application/pdf", filename="arvore-genealógica.pdf")
+    file_path = resolve_export_file_path(export.file_path)
+    return FileResponse(file_path, media_type="application/pdf", filename="arvore-genealógica.pdf")
 
 
 @router.get("/families/{family_id}/exports", response_model=list[ExportOut])

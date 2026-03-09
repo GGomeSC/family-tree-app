@@ -1,6 +1,7 @@
 from pathlib import Path
 import uuid
 
+from fastapi import HTTPException
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.core.config import settings
@@ -69,4 +70,14 @@ def export_pdf(html: str, family_id: int) -> str:
         raise RuntimeError("WeasyPrint is not installed or unavailable") from exc
 
     HTML(string=html, base_url=str(TEMPLATES_DIR)).write_pdf(str(output_path))
-    return str(output_path)
+    return filename
+
+
+def resolve_export_file_path(stored_file_path: str) -> Path:
+    safe_root = Path(settings.export_dir).resolve()
+    resolved_path = (safe_root / stored_file_path).resolve()
+    if not resolved_path.is_relative_to(safe_root):
+        raise HTTPException(status_code=403, detail="Access to this file is not permitted")
+    if not resolved_path.is_file():
+        raise HTTPException(status_code=404, detail="Export file not found")
+    return resolved_path
