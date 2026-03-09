@@ -2,13 +2,10 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import Base, SessionLocal, engine
-from app.core.security import get_password_hash
-from app.models import User, UserRole
+from app.core.database import Base, engine
 
 
 app = FastAPI(title=settings.app_name)
@@ -37,22 +34,3 @@ def health():
 def startup() -> None:
     Base.metadata.create_all(bind=engine)
     Path(settings.export_dir).mkdir(parents=True, exist_ok=True)
-
-    admin_email = "admin@example.com"
-    admin_password = "admin123"
-
-    db: Session = SessionLocal()
-    try:
-        existing = db.query(User).filter(User.email == admin_email).first()
-        if not existing:
-            db.add(
-                User(
-                    name="Admin",
-                    email=admin_email,
-                    password_hash=get_password_hash(admin_password),
-                    role=UserRole.ADMIN,
-                )
-            )
-            db.commit()
-    finally:
-        db.close()

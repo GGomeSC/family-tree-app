@@ -4,7 +4,7 @@ import { api, setToken } from "../api/client";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "admin@example.com", password: "admin123" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
   const onSubmit = async (e: FormEvent) => {
@@ -22,14 +22,25 @@ export function LoginPage() {
   return (
     <main className="container narrow">
       <h2>Entrar</h2>
+      <p>Use as credenciais configuradas para seu ambiente.</p>
       <form onSubmit={onSubmit} className="card">
         <label>
           E-mail
-          <input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+          <input
+            type="email"
+            placeholder="voce@empresa.com"
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+          />
         </label>
         <label>
           Senha
-          <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+          <input
+            type="password"
+            placeholder="Sua senha"
+            value={form.password}
+            onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+          />
         </label>
         {error && <p className="error">{error}</p>}
         <button type="submit">Acessar</button>

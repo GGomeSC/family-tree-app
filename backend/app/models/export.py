@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -15,6 +15,6 @@ class Export(Base):
     format: Mapped[str] = mapped_column(String(20), default="pdf", nullable=False)
     template_version: Mapped[str] = mapped_column(String(50), default="v1", nullable=False)
     file_path: Mapped[str] = mapped_column(String(512), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     family = relationship("Family", back_populates="exports")

@@ -15,6 +15,9 @@ class Settings:
     allowed_origins: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     allowed_origin_regex: str = os.getenv("ALLOWED_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|192\.168\.\d+\.\d+):5173")
     export_dir: str = os.getenv("EXPORT_DIR", "./exports")
+    bootstrap_admin_email: str = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "")
+    bootstrap_admin_password: str = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "")
+    bootstrap_admin_name: str = os.getenv("BOOTSTRAP_ADMIN_NAME", "")
 
 
 settings = Settings()

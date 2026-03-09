@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 import enum
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String
@@ -22,8 +22,13 @@ class Family(Base):
     client_reference: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[FamilyStatus] = mapped_column(Enum(FamilyStatus), default=FamilyStatus.DRAFT, nullable=False)
     created_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
     archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     creator = relationship("User", back_populates="families")

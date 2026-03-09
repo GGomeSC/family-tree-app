@@ -40,7 +40,7 @@ def test_rename_case_schema_to_family_preserves_existing_data(tmp_path: Path):
 
     db_path = tmp_path / "family-migration.sqlite"
     engine = sa.create_engine(f"sqlite:///{db_path}")
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).isoformat()
 
     with engine.begin() as connection:
         _run_upgrade(connection, initial)
