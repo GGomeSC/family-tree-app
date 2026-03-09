@@ -9,9 +9,21 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 from app.core.database import Base, get_db
+from app.core.rate_limit import limiter
 from app.core.security import get_password_hash
 from app.main import app
 from app.models.user import User, UserRole
+
+
+def _reset_rate_limiter_state() -> None:
+    storage = getattr(limiter, "_storage", None)
+    if storage is None:
+        return
+    if hasattr(storage, "reset"):
+        storage.reset()
+        return
+    if hasattr(storage, "clear"):
+        storage.clear()
 
 
 @pytest.fixture
@@ -25,6 +37,8 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(settings, "auth_cookie_samesite", "strict")
     monkeypatch.setattr(settings, "auth_cookie_name", "access_token")
     monkeypatch.setattr(settings, "access_token_expire_minutes", 60)
+    monkeypatch.setattr(settings, "login_rate_limit_attempts", 5)
+    monkeypatch.setattr(settings, "login_rate_limit_window_minutes", 15)
 
     db: Session = session_factory()
     try:
@@ -49,10 +63,12 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             test_db.close()
 
     app.dependency_overrides[get_db] = _get_test_db
+    _reset_rate_limiter_state()
     try:
         with TestClient(app, base_url="https://testserver") as test_client:
             yield test_client
     finally:
+        _reset_rate_limiter_state()
         app.dependency_overrides.clear()
 
 
@@ -95,3 +111,36 @@ def test_refresh_renews_cookie_when_authenticated(client: TestClient):
     set_cookie = refresh.headers["set-cookie"].lower()
     assert "access_token=" in set_cookie
     assert "httponly" in set_cookie
+
+
+def test_login_rate_limit_blocks_sixth_attempt_and_returns_retry_after(client: TestClient):
+    for _ in range(5):
+        response = client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": "wrong"})
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid credentials"
+
+    limited = client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": "wrong-again"})
+    assert limited.status_code == 429
+    assert "Too many login attempts" in limited.json()["detail"]
+    assert int(limited.headers["retry-after"]) >= 1
+
+    still_limited = client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.com", "password": "password123"},
+    )
+    assert still_limited.status_code == 429
+
+
+def test_login_rate_limit_allows_new_attempt_after_window_reset_simulation(client: TestClient):
+    for _ in range(5):
+        response = client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": "wrong"})
+        assert response.status_code == 401
+
+    limited = client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": "wrong"})
+    assert limited.status_code == 429
+
+    # Simulates the end of the rate limit window without waiting 15 real minutes.
+    _reset_rate_limiter_state()
+
+    after_window = client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": "wrong"})
+    assert after_window.status_code == 401

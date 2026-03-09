@@ -26,6 +26,8 @@ class Settings:
     auth_cookie_secure: bool = _get_bool("AUTH_COOKIE_SECURE", True)
     auth_cookie_samesite: str = os.getenv("AUTH_COOKIE_SAMESITE", "strict")
     auth_cookie_path: str = os.getenv("AUTH_COOKIE_PATH", "/")
+    login_rate_limit_attempts: int = int(os.getenv("LOGIN_RATE_LIMIT_ATTEMPTS", "5"))
+    login_rate_limit_window_minutes: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW_MINUTES", "15"))
     bootstrap_admin_email: str = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "")
     bootstrap_admin_password: str = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "")
     bootstrap_admin_name: str = os.getenv("BOOTSTRAP_ADMIN_NAME", "")

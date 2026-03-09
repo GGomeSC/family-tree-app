@@ -12,9 +12,16 @@
 
 | Método e rota | Autenticação | Papel | Finalidade | Payload resumido | Resposta resumida | Erros e regras |
 | --- | --- | --- | --- | --- | --- | --- |
-| `POST /auth/login` | Não | Público | Autenticar usuário ativo | `email`, `password` | `access_token`, `token_type` | `401` para credenciais inválidas |
+| `POST /auth/login` | Não | Público | Autenticar usuário ativo | `email`, `password` | `message` + cookie HTTP-only de autenticação | `401` para credenciais inválidas; `429` ao exceder limite de tentativas com header `Retry-After` |
 | `POST /auth/logout` | Sim | `admin` ou `staff` | Encerrar sessão no cliente | Sem body | `message` | Não invalida token no servidor; orienta remover o token no cliente |
 | `GET /auth/me` | Sim | `admin` ou `staff` | Retornar usuário autenticado | Sem body | `id`, `name`, `email`, `role`, `created_at` | `401` para token ausente ou inválido |
+
+### Rate limit de login
+
+- Política: `5` requisições por IP a cada `15` minutos em `POST /auth/login`.
+- Ao exceder o limite, a API responde `429` com:
+  - body: `{ "detail": "Too many login attempts. Try again in <N> seconds." }`
+  - header: `Retry-After: <N>`
 
 ## Users
 
