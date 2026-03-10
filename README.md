@@ -92,6 +92,43 @@ npm install
 npm run build
 ```
 
+### Testes backend locais
+
+Nao e necessario usar GitHub Actions para rodar a suite. Os testes podem ser executados localmente no seu ambiente.
+
+Suite backend completa:
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pytest -q
+```
+
+Suite com cobertura minima de 80% para os caminhos criticos:
+
+```bash
+cd backend
+source .venv/bin/activate
+pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80
+```
+
+Teste opcional de concorrencia com PostgreSQL (nao faz parte do fluxo obrigatorio local):
+
+```bash
+cd backend
+source .venv/bin/activate
+TEST_POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:5432/family_tree_test \
+pytest -q tests/test_parent_child_links.py::test_concurrent_cycle_attempts_postgres
+```
+
+Se voce estiver usando Docker para desenvolvimento diario, tambem pode rodar a suite dentro do container backend:
+
+```bash
+make test
+```
+
 ### Database migrations
 
 Alembic exige `DATABASE_URL` explicitamente. Se a variavel nao estiver definida, `alembic upgrade head` falha antes de conectar para evitar migracoes acidentais no banco errado.

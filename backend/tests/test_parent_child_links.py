@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 import os
@@ -187,14 +188,14 @@ def test_create_parent_child_link_rejects_ancestry_cycle(sqlite_client):
 
 
 def _postgres_test_url() -> str | None:
-    database_url = os.getenv("TEST_POSTGRES_URL") or os.getenv("DATABASE_URL")
+    database_url = os.getenv("TEST_POSTGRES_URL")
     if not database_url or not database_url.startswith("postgresql"):
         return None
     return database_url
 
 
-@pytest.mark.skipif(_postgres_test_url() is None, reason="PostgreSQL test database is required for row-lock stress test")
-def test_concurrent_cycle_attempts_postgres():
+@pytest.mark.skipif(_postgres_test_url() is None, reason="TEST_POSTGRES_URL is required for row-lock stress test")
+def test_concurrent_cycle_attempts_postgres(monkeypatch: pytest.MonkeyPatch):
     database_url = _postgres_test_url()
     assert database_url is not None
 
@@ -214,6 +215,11 @@ def test_concurrent_cycle_attempts_postgres():
         db.close()
 
     _override_app(session_factory, admin)
+    @asynccontextmanager
+    async def _noop_lifespan(_: object):
+        yield
+
+    monkeypatch.setattr(app.router, "lifespan_context", _noop_lifespan)
     try:
         def _attempt(index: int) -> int:
             payload = (

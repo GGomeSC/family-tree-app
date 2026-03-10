@@ -32,7 +32,10 @@ def _clear_backend_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _settings_kwargs(tmp_path: Path) -> dict[str, object]:
-    return {"_env_file": None, "database_url": f"sqlite:///{tmp_path / 'config.sqlite'}"}
+    return {
+        "_env_file": tmp_path / ".missing.env",
+        "database_url": f"sqlite:///{tmp_path / 'config.sqlite'}",
+    }
 
 
 def test_settings_accept_valid_production_secret(tmp_path: Path):
@@ -59,9 +62,10 @@ def test_settings_reject_short_production_secret(tmp_path: Path):
         )
 
 
-def test_settings_allow_default_secret_in_development(tmp_path: Path):
+def test_settings_allow_default_secret_in_development(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from app.core.config import DEFAULT_SECRET_KEY, Settings
 
+    _clear_backend_env(monkeypatch)
     settings = Settings(environment="development", **_settings_kwargs(tmp_path))
 
     assert settings.secret_key == DEFAULT_SECRET_KEY
@@ -85,9 +89,10 @@ def test_settings_reject_invalid_cookie_samesite(tmp_path: Path):
     assert "auth_cookie_samesite" in str(excinfo.value)
 
 
-def test_settings_load_env_file_for_backend_local_runs(tmp_path: Path):
+def test_settings_load_env_file_for_backend_local_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from app.core.config import Settings
 
+    _clear_backend_env(monkeypatch)
     env_file = tmp_path / ".env"
     env_file.write_text(
         "\n".join(

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -90,7 +90,7 @@ def update_family_status(
 
     family.status = payload.status
     if payload.status == FamilyStatus.ARCHIVED:
-        family.archived_at = datetime.utcnow()
+        family.archived_at = datetime.now(UTC)
     db.add(family)
     db.commit()
     db.refresh(family)
@@ -105,7 +105,7 @@ def archive_family(
 ):
     family = get_family_or_404(db, current_user, family_id)
     family.status = FamilyStatus.ARCHIVED
-    family.archived_at = datetime.utcnow()
+    family.archived_at = datetime.now(UTC)
     db.add(family)
     db.commit()
     return MessageResponse(message="Family archived")
