@@ -1,5 +1,10 @@
 export type AppMode = "live" | "mock";
 export type RouterMode = "browser" | "hash";
+export interface RuntimeConfig {
+  appMode: AppMode;
+  routerMode: RouterMode;
+  basePath: string;
+}
 
 function parseAppMode(value: string | undefined): AppMode {
   return value === "mock" ? "mock" : "live";
@@ -21,8 +26,8 @@ function normalizeBasePath(value: string | undefined): string {
   return result;
 }
 
-export const runtimeConfig = {
+export const runtimeConfig: RuntimeConfig = Object.freeze({
   appMode: parseAppMode(import.meta.env.VITE_APP_MODE),
   routerMode: parseRouterMode(import.meta.env.VITE_ROUTER_MODE),
   basePath: normalizeBasePath(import.meta.env.VITE_BASE_PATH),
-};
+});

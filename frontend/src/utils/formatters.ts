@@ -1,4 +1,8 @@
 export type NameDisplayMode = "first-first" | "last-first";
+export interface FormattedNodeName {
+  firstName: string;
+  restName: string;
+}
 
 export function formatDate(value: string) {
   if (!value) return "";
@@ -6,7 +10,7 @@ export function formatDate(value: string) {
   return y && m && d ? `${d}/${m}/${y}` : value;
 }
 
-export function formatNodeName(value: string, nameDisplayMode: NameDisplayMode) {
+export function formatNodeName(value: string, nameDisplayMode: NameDisplayMode): FormattedNodeName {
   const normalized = value.trim().replace(/\s+/g, " ") || "Pessoa sem nome";
   const parts = normalized.split(" ");
   

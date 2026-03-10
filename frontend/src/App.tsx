@@ -1,74 +1,54 @@
-import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { api } from "./api/client";
-import { runtimeConfig } from "./config/runtime";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { useAuthStatus } from "./hooks/useAuthStatus";
 import { LoginPage } from "./pages/LoginPage";
 import { FamiliesPage } from "./pages/FamiliesPage";
 import { FamilyEditorPage } from "./pages/FamilyEditorPage";
-import { MockPreviewPage } from "./pages/MockPreviewPage";
+
+function AppHeader({
+  isAuthenticated,
+  onLogout,
+}: {
+  isAuthenticated: boolean;
+  onLogout: () => Promise<void>;
+}) {
+  return (
+    <header className="topbar">
+      <h1>Árvore Genealógica</h1>
+      <nav>
+        <Link to="/families">Famílias</Link>
+        {isAuthenticated && (
+          <button type="button" onClick={onLogout}>
+            Sair
+          </button>
+        )}
+      </nav>
+    </header>
+  );
+}
 
 export function App() {
   const navigate = useNavigate();
-  const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous">("loading");
+  const { authState, isAuthenticated, setAuthState } = useAuthStatus();
 
-  useEffect(() => {
-    if (runtimeConfig.appMode === "mock") {
-      return;
-    }
-    let isMounted = true;
-    api
-      .me()
-      .then(() => {
-        if (isMounted) setAuthState("authenticated");
-      })
-      .catch(() => {
-        if (isMounted) setAuthState("anonymous");
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  if (runtimeConfig.appMode === "mock") {
-    return (
-      <Routes>
-        <Route path="*" element={<MockPreviewPage />} />
-      </Routes>
-    );
+  async function handleLogout() {
+    await api.logout().catch(() => undefined);
+    setAuthState("anonymous");
+    navigate("/login");
   }
-
-  const isAuthenticated = authState === "authenticated";
 
   if (authState === "loading") {
     return (
       <div>
-        <header className="topbar">
-          <h1>Árvore Genealógica</h1>
-        </header>
+        <AppHeader isAuthenticated={false} onLogout={handleLogout} />
       </div>
     );
   }
 
   return (
     <div>
-      <header className="topbar">
-        <h1>Árvore Genealógica</h1>
-        <nav>
-          <Link to="/families">Famílias</Link>
-          {isAuthenticated && (
-            <button
-              type="button"
-              onClick={async () => {
-                await api.logout().catch(() => undefined);
-                setAuthState("anonymous");
-                navigate("/login");
-              }}
-            >
-              Sair
-            </button>
-          )}
-        </nav>
-      </header>
+      <AppHeader isAuthenticated={isAuthenticated} onLogout={handleLogout} />
       <Routes>
         <Route
           path="/login"
@@ -80,8 +60,22 @@ export function App() {
             )
           }
         />
-        <Route path="/families" element={isAuthenticated ? <FamiliesPage /> : <Navigate to="/login" replace />} />
-        <Route path="/families/:familyId" element={isAuthenticated ? <FamilyEditorPage /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/families"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <FamiliesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/families/:familyId"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <FamilyEditorPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to={isAuthenticated ? "/families" : "/login"} replace />} />
       </Routes>
     </div>

@@ -1,4 +1,6 @@
 export type FamilyStatus = "Draft" | "Reviewed" | "Exported" | "Archived";
+export type AuthState = "loading" | "authenticated" | "anonymous";
+export type LayoutPersonRole = "lineage" | "spouse";
 
 export interface FamilyItem {
   id: number;
@@ -35,7 +37,7 @@ export interface LayoutPerson {
   is_richiedente: boolean;
   x: number;
   y: number;
-  role: "lineage" | "spouse";
+  role: LayoutPersonRole;
   page: number;
 }
 
@@ -65,4 +67,35 @@ export interface LayoutPreview {
 export interface ExportItem {
   id: number;
   created_at: string;
+}
+
+export interface ApiMessageResponse {
+  message: string;
+}
+
+export interface AuthUser {
+  name: string;
+  email: string;
+}
+
+export interface CreateFamilyRequest {
+  title: string;
+  client_reference?: string;
+}
+
+export interface CreatePersonRequest {
+  full_name: string;
+  birth_date: string;
+  is_richiedente: boolean;
+}
+
+export interface CreateUnionRequest {
+  partner_a_person_id: number;
+  partner_b_person_id: number;
+  marriage_date?: string;
+}
+
+export interface CreateParentChildRequest {
+  parent_person_id: number;
+  child_person_id: number;
 }

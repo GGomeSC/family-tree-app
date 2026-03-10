@@ -15,7 +15,7 @@ export function FamiliesPage() {
     e.preventDefault();
     setError("");
     try {
-      await api.createFamily(form.title, form.clientRef || undefined);
+      await api.createFamily({ title: form.title, client_reference: form.clientRef || undefined });
       setForm({ title: "", clientRef: "" });
       loadFamilies();
     } catch (err) {

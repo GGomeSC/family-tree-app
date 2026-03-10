@@ -1,22 +1,47 @@
-import { LayoutPreview } from "../types";
+import {
+  ApiMessageResponse,
+  AuthUser,
+  CreateFamilyRequest,
+  CreateParentChildRequest,
+  CreatePersonRequest,
+  CreateUnionRequest,
+  ExportItem,
+  FamilyItem,
+  LayoutPreview,
+  Person,
+} from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 
-async function request<T>(path: string, options: RequestInit = {}, retryOnAuthFailure = true): Promise<T> {
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
+type JsonRequestOptions = Omit<RequestInit, "body"> & {
+  body?: unknown;
+};
 
-  const response = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: "include" });
+function toRequestInit(options: JsonRequestOptions = {}): RequestInit {
+  const { body, headers, ...requestOptions } = options;
+  const finalHeaders = new Headers(headers);
+
+  if (body !== undefined) {
+    finalHeaders.set("Content-Type", "application/json");
+  }
+
+  return {
+    ...requestOptions,
+    headers: finalHeaders,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    credentials: "include",
+  };
+}
+
+async function request<T>(path: string, options: JsonRequestOptions = {}, retryOnAuthFailure = true): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, toRequestInit(options));
   if (
     response.status === 401 &&
     retryOnAuthFailure &&
     path !== "/auth/login" &&
     path !== "/auth/refresh"
   ) {
-    const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-    });
+    const refreshResponse = await fetch(`${API_BASE}/auth/refresh`, toRequestInit({ method: "POST" }));
     if (refreshResponse.ok) {
       return request<T>(path, options, false);
     }
@@ -29,27 +54,24 @@ async function request<T>(path: string, options: RequestInit = {}, retryOnAuthFa
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
-const post = <T>(path: string, body?: any) => 
-  request<T>(path, { method: "POST", ...(body && { body: JSON.stringify(body) }) });
+const post = <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body });
+const familyPath = (familyId: number, suffix = "") => `/families/${familyId}${suffix}`;
 
 export const api = {
-  login: (email: string, password: string) => post<{ message: string }>("/auth/login", { email, password }),
-  logout: () => post<{ message: string }>("/auth/logout"),
-  me: () => request<{ name: string; email: string }>("/auth/me"),
-  listFamilies: () => request<any[]>("/families"),
-  createFamily: (title: string, client_reference?: string) => post<any>("/families", { title, client_reference }),
-  
-  createPerson: (familyId: number, payload: { full_name: string; birth_date: string; is_richiedente: boolean }) =>
-    post<any>(`/families/${familyId}/persons`, payload),
-    
-  createUnion: (familyId: number, payload: { partner_a_person_id: number; partner_b_person_id: number; marriage_date?: string }) =>
-    post<any>(`/families/${familyId}/unions`, payload),
-    
-  createParentChild: (familyId: number, payload: { parent_person_id: number; child_person_id: number }) =>
-    post<any>(`/families/${familyId}/parent-child-links`, payload),
-    
-  preview: (familyId: number) => request<LayoutPreview>(`/families/${familyId}/preview`),
-  exportPdf: (familyId: number) => post<any>(`/families/${familyId}/export/pdf`),
-  listExports: (familyId: number) => request<any[]>(`/families/${familyId}/exports`),
+  login: (email: string, password: string) =>
+    post<ApiMessageResponse>("/auth/login", { email, password }),
+  logout: () => post<ApiMessageResponse>("/auth/logout"),
+  me: () => request<AuthUser>("/auth/me"),
+  listFamilies: () => request<FamilyItem[]>("/families"),
+  createFamily: (payload: CreateFamilyRequest) => post<FamilyItem>("/families", payload),
+  createPerson: (familyId: number, payload: CreatePersonRequest) =>
+    post<Person>(familyPath(familyId, "/persons"), payload),
+  createUnion: (familyId: number, payload: CreateUnionRequest) =>
+    post<ApiMessageResponse>(familyPath(familyId, "/unions"), payload),
+  createParentChild: (familyId: number, payload: CreateParentChildRequest) =>
+    post<ApiMessageResponse>(familyPath(familyId, "/parent-child-links"), payload),
+  preview: (familyId: number) => request<LayoutPreview>(familyPath(familyId, "/preview")),
+  exportPdf: (familyId: number) => post<ApiMessageResponse>(familyPath(familyId, "/export/pdf")),
+  listExports: (familyId: number) => request<ExportItem[]>(familyPath(familyId, "/exports")),
   downloadExportUrl: (exportId: number) => `${API_BASE}/exports/${exportId}/download`,
 };
