@@ -32,7 +32,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
           E-mail
           <input
             type="email"
-            placeholder="voce@empresa.com"
+            placeholder="seu.email@empresa.com.br"
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           />

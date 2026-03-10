@@ -31,12 +31,17 @@ export function MockPreviewPage() {
   useClickOutside(nameMenuRef, actions.closeNameMenu);
 
   useEffect(() => {
-    const observer = new ResizeObserver((entries) => actions.setWidth(entries[0].contentRect.width));
+    const observer = new ResizeObserver((entries) => {
+      const firstEntry = entries[0];
+      if (firstEntry) {
+        actions.setWidth(firstEntry.contentRect.width);
+      }
+    });
     if (treeHostRef.current) {
       observer.observe(treeHostRef.current);
     }
     return () => observer.disconnect();
-  }, []);
+  }, [actions]);
 
   const selectedPerson = selectedId ? byId.get(selectedId) ?? null : null;
 

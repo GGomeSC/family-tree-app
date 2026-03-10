@@ -27,7 +27,7 @@ function normalizeBasePath(value: string | undefined): string {
 }
 
 export const runtimeConfig: RuntimeConfig = Object.freeze({
-  appMode: parseAppMode(import.meta.env.VITE_APP_MODE),
-  routerMode: parseRouterMode(import.meta.env.VITE_ROUTER_MODE),
-  basePath: normalizeBasePath(import.meta.env.VITE_BASE_PATH),
+  appMode: parseAppMode(import.meta.env["VITE_APP_MODE"]),
+  routerMode: parseRouterMode(import.meta.env["VITE_ROUTER_MODE"]),
+  basePath: normalizeBasePath(import.meta.env["VITE_BASE_PATH"]),
 });

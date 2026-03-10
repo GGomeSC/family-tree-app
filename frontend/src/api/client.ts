@@ -11,7 +11,7 @@ import {
   Person,
 } from "../types";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
+const API_BASE = import.meta.env["VITE_API_URL"] ?? "http://localhost:8000/api/v1";
 
 type JsonRequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
@@ -20,17 +20,18 @@ type JsonRequestOptions = Omit<RequestInit, "body"> & {
 function toRequestInit(options: JsonRequestOptions = {}): RequestInit {
   const { body, headers, ...requestOptions } = options;
   const finalHeaders = new Headers(headers);
+  const requestInit: RequestInit = {
+    ...requestOptions,
+    headers: finalHeaders,
+    credentials: "include",
+  };
 
   if (body !== undefined) {
     finalHeaders.set("Content-Type", "application/json");
+    requestInit.body = JSON.stringify(body);
   }
 
-  return {
-    ...requestOptions,
-    headers: finalHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: "include",
-  };
+  return requestInit;
 }
 
 async function request<T>(path: string, options: JsonRequestOptions = {}, retryOnAuthFailure = true): Promise<T> {

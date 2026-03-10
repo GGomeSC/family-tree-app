@@ -30,11 +30,16 @@ export function UnionFormCard({ people, onSubmit }: UnionFormCardProps) {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
-    const didSave = await onSubmit({
+    const payload: CreateUnionRequest = {
       partner_a_person_id: form.partnerA,
       partner_b_person_id: form.partnerB,
-      marriage_date: form.marriageDate || undefined,
-    });
+    };
+
+    if (form.marriageDate) {
+      payload.marriage_date = form.marriageDate;
+    }
+
+    const didSave = await onSubmit(payload);
 
     if (didSave) {
       setForm(initialUnionForm);

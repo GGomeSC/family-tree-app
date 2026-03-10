@@ -136,7 +136,7 @@ function PersonNodes({
 }: {
   people: LayoutPerson[];
   selectedPersonId: number | null;
-  onSelectPerson?: (personId: number) => void;
+  onSelectPerson: ((personId: number) => void) | undefined;
   nameDisplayMode: NameDisplayMode;
   nameTargetPersonIds: Set<number>;
 }) {

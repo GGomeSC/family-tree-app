@@ -13,18 +13,20 @@ export function formatDate(value: string) {
 export function formatNodeName(value: string, nameDisplayMode: NameDisplayMode): FormattedNodeName {
   const normalized = value.trim().replace(/\s+/g, " ") || "Pessoa sem nome";
   const parts = normalized.split(" ");
+  const [firstPart = "Pessoa sem nome"] = parts;
+  const lastPart = parts[parts.length - 1] ?? firstPart;
   
-  if (parts.length === 1) return { firstName: parts[0], restName: "" };
+  if (parts.length === 1) return { firstName: firstPart, restName: "" };
 
   if (nameDisplayMode === "last-first") {
     return {
-      firstName: parts[parts.length - 1],
+      firstName: lastPart,
       restName: parts.slice(0, -1).join(" "),
     };
   }
 
   return {
-    firstName: parts[0],
+    firstName: firstPart,
     restName: parts.slice(1).join(" "),
   };
 }
