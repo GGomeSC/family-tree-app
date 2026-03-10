@@ -9,7 +9,7 @@ import { useFamilyEditorData } from "../hooks/useFamilyEditorData";
 export function FamilyEditorPage() {
   const { familyId } = useParams();
   const id = Number(familyId);
-  const { error, exports, personOptions, preview, createPerson, createUnion, createParentChild, exportPdf } =
+  const { error, exports, persons, preview, createPerson, createUnion, createParentChild, exportPdf } =
     useFamilyEditorData(id);
 
   return (
@@ -19,8 +19,8 @@ export function FamilyEditorPage() {
 
       <section className="grid-two">
         <PersonFormCard onSubmit={createPerson} />
-        <UnionFormCard people={personOptions} onSubmit={createUnion} />
-        <ParentChildFormCard people={personOptions} onSubmit={createParentChild} />
+        <UnionFormCard people={persons} onSubmit={createUnion} />
+        <ParentChildFormCard people={persons} onSubmit={createParentChild} />
         <ExportPanelCard exports={exports} onExport={exportPdf} />
       </section>
 

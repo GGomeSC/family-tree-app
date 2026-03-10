@@ -1,5 +1,30 @@
 from __future__ import annotations
 
+
+def test_list_people_returns_empty_list_for_empty_family(integration_env, staff_user, sample_family):
+    response = integration_env.client.get(
+        f"/api/v1/families/{sample_family.id}/persons",
+        headers=integration_env.auth_headers_for(staff_user),
+    )
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_people_returns_people_in_id_order(integration_env, staff_user, sample_family):
+    first = integration_env.create_person(family=sample_family, full_name="Second Created")
+    second = integration_env.create_person(family=sample_family, full_name="Third Created")
+
+    response = integration_env.client.get(
+        f"/api/v1/families/{sample_family.id}/persons",
+        headers=integration_env.auth_headers_for(staff_user),
+    )
+
+    assert response.status_code == 200
+    assert [person["id"] for person in response.json()] == [first.id, second.id]
+    assert [person["full_name"] for person in response.json()] == ["Second Created", "Third Created"]
+
+
 def test_create_update_and_delete_person(integration_env, staff_user, sample_family):
     create = integration_env.client.post(
         f"/api/v1/families/{sample_family.id}/persons",

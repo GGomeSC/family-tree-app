@@ -22,6 +22,16 @@ def _assert_person_in_family(db: Session, family_id: int, person_id: int) -> Per
     return person
 
 
+@router.get("/{family_id}/persons", response_model=list[PersonOut])
+def list_people(
+    family_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    get_family_or_404(db, current_user, family_id)
+    return db.query(Person).filter(Person.family_id == family_id).order_by(Person.id).all()
+
+
 @router.post("/{family_id}/persons", response_model=PersonOut, status_code=status.HTTP_201_CREATED)
 def create_person(
     family_id: int,

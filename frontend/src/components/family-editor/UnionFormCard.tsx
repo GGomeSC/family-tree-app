@@ -1,8 +1,8 @@
 import { FormEvent, useState } from "react";
-import { CreateUnionRequest, LayoutPerson } from "../../types";
+import { CreateUnionRequest, Person } from "../../types";
 
 interface UnionFormCardProps {
-  people: LayoutPerson[];
+  people: Person[];
   onSubmit: (payload: CreateUnionRequest) => Promise<boolean>;
 }
 
@@ -12,12 +12,12 @@ const initialUnionForm = {
   marriageDate: "",
 };
 
-function PersonOptions({ people }: { people: LayoutPerson[] }) {
+function PersonOptions({ people }: { people: Person[] }) {
   return (
     <>
       {people.map((person) => (
         <option key={person.id} value={person.id}>
-          {person.name}
+          {person.full_name}
         </option>
       ))}
     </>

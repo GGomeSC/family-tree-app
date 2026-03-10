@@ -1,42 +1,71 @@
 import { useEffect, useState } from "react";
-import { api } from "../api/client";
+import { ApiError, api } from "../api/client";
 import {
   CreateParentChildRequest,
   CreatePersonRequest,
   CreateUnionRequest,
   ExportItem,
-  LayoutPerson,
   LayoutPreview,
+  Person,
 } from "../types";
 
-async function swallowError<T>(promise: Promise<T>, fallback: T) {
-  try {
-    return await promise;
-  } catch {
-    return fallback;
-  }
+const EMPTY_PREVIEW_DETAIL = "Family has no persons";
+
+function isEmptyPreviewError(error: unknown) {
+  return error instanceof ApiError && error.status === 400 && error.detail === EMPTY_PREVIEW_DETAIL;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Erro na API";
 }
 
 export function useFamilyEditorData(familyId: number) {
+  const [persons, setPersons] = useState<Person[]>([]);
   const [preview, setPreview] = useState<LayoutPreview | null>(null);
   const [exports, setExports] = useState<ExportItem[]>([]);
   const [error, setError] = useState("");
 
   async function loadData() {
-    try {
-      const [nextPreview, nextExports] = await Promise.all([
-        swallowError(api.preview(familyId), null),
-        swallowError(api.listExports(familyId), []),
-      ]);
-      setPreview(nextPreview);
-      setExports(nextExports);
-    } catch (err) {
-      console.error(err);
+    const [personsResult, previewResult, exportsResult] = await Promise.allSettled([
+      api.listPersons(familyId),
+      api.preview(familyId),
+      api.listExports(familyId),
+    ]);
+
+    let nextError: unknown = null;
+
+    if (personsResult.status === "fulfilled") {
+      setPersons(personsResult.value);
+    } else {
+      setPersons([]);
+      nextError = personsResult.reason;
     }
+
+    if (previewResult.status === "fulfilled") {
+      setPreview(previewResult.value);
+    } else if (isEmptyPreviewError(previewResult.reason)) {
+      setPreview(null);
+    } else {
+      setPreview(null);
+      nextError ??= previewResult.reason;
+    }
+
+    if (exportsResult.status === "fulfilled") {
+      setExports(exportsResult.value);
+    } else {
+      setExports([]);
+    }
+
+    if (nextError) {
+      setError(getErrorMessage(nextError));
+      throw nextError;
+    }
+
+    setError("");
   }
 
   useEffect(() => {
-    void loadData();
+    loadData().catch((err) => console.error(err));
   }, [familyId]);
 
   async function runMutation(action: () => Promise<unknown>) {
@@ -53,10 +82,10 @@ export function useFamilyEditorData(familyId: number) {
   }
 
   return {
+    persons,
     preview,
     exports,
     error,
-    personOptions: preview?.persons ?? ([] as LayoutPerson[]),
     createPerson: (payload: CreatePersonRequest) => runMutation(() => api.createPerson(familyId, payload)),
     createUnion: (payload: CreateUnionRequest) => runMutation(() => api.createUnion(familyId, payload)),
     createParentChild: (payload: CreateParentChildRequest) =>

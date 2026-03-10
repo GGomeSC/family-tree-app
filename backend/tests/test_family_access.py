@@ -115,10 +115,32 @@ def test_staff_can_access_their_own_family_preview(family_access_fixture):
         app.dependency_overrides.clear()
 
 
+def test_staff_can_list_people_for_their_own_family(family_access_fixture):
+    client = _client_for_user(family_access_fixture["session_factory"], family_access_fixture["owner"])
+    try:
+        response = client.get(f"/api/v1/families/{family_access_fixture['family'].id}/persons")
+        assert response.status_code == 200
+        assert [person["full_name"] for person in response.json()] == ["Parent Person", "Child Person"]
+    finally:
+        client.close()
+        app.dependency_overrides.clear()
+
+
 def test_staff_gets_404_for_other_users_family_read(family_access_fixture):
     client = _client_for_user(family_access_fixture["session_factory"], family_access_fixture["outsider"])
     try:
         response = client.get(f"/api/v1/families/{family_access_fixture['family'].id}/preview")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Family not found"
+    finally:
+        client.close()
+        app.dependency_overrides.clear()
+
+
+def test_staff_gets_404_for_other_users_family_people_list(family_access_fixture):
+    client = _client_for_user(family_access_fixture["session_factory"], family_access_fixture["outsider"])
+    try:
+        response = client.get(f"/api/v1/families/{family_access_fixture['family'].id}/persons")
         assert response.status_code == 404
         assert response.json()["detail"] == "Family not found"
     finally:
@@ -151,6 +173,17 @@ def test_admin_can_access_another_users_family(family_access_fixture):
         response = client.get(f"/api/v1/families/{family_access_fixture['family'].id}")
         assert response.status_code == 200
         assert response.json()["id"] == family_access_fixture["family"].id
+    finally:
+        client.close()
+        app.dependency_overrides.clear()
+
+
+def test_admin_can_list_people_for_another_users_family(family_access_fixture):
+    client = _client_for_user(family_access_fixture["session_factory"], family_access_fixture["admin"])
+    try:
+        response = client.get(f"/api/v1/families/{family_access_fixture['family'].id}/persons")
+        assert response.status_code == 200
+        assert [person["full_name"] for person in response.json()] == ["Parent Person", "Child Person"]
     finally:
         client.close()
         app.dependency_overrides.clear()

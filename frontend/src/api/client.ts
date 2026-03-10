@@ -17,6 +17,18 @@ type JsonRequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
+export class ApiError extends Error {
+  status: number;
+  detail: string;
+
+  constructor(status: number, detail: string) {
+    super(detail);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 function toRequestInit(options: JsonRequestOptions = {}): RequestInit {
   const { body, headers, ...requestOptions } = options;
   const finalHeaders = new Headers(headers);
@@ -50,7 +62,7 @@ async function request<T>(path: string, options: JsonRequestOptions = {}, retryO
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    throw new Error(payload.detail ?? "Erro na API");
+    throw new ApiError(response.status, payload.detail ?? "Erro na API");
   }
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
@@ -65,6 +77,7 @@ export const api = {
   me: () => request<AuthUser>("/auth/me"),
   listFamilies: () => request<FamilyItem[]>("/families"),
   createFamily: (payload: CreateFamilyRequest) => post<FamilyItem>("/families", payload),
+  listPersons: (familyId: number) => request<Person[]>(familyPath(familyId, "/persons")),
   createPerson: (familyId: number, payload: CreatePersonRequest) =>
     post<Person>(familyPath(familyId, "/persons"), payload),
   createUnion: (familyId: number, payload: CreateUnionRequest) =>

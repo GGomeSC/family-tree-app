@@ -1,8 +1,8 @@
 import { FormEvent, useState } from "react";
-import { CreateParentChildRequest, LayoutPerson } from "../../types";
+import { CreateParentChildRequest, Person } from "../../types";
 
 interface ParentChildFormCardProps {
-  people: LayoutPerson[];
+  people: Person[];
   onSubmit: (payload: CreateParentChildRequest) => Promise<boolean>;
 }
 
@@ -11,12 +11,12 @@ const initialParentChildForm = {
   childId: 0,
 };
 
-function PersonOptions({ people }: { people: LayoutPerson[] }) {
+function PersonOptions({ people }: { people: Person[] }) {
   return (
     <>
       {people.map((person) => (
         <option key={person.id} value={person.id}>
-          {person.name}
+          {person.full_name}
         </option>
       ))}
     </>
