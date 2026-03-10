@@ -41,8 +41,10 @@ Acesse:
 ### Variaveis de ambiente e segredos
 
 - O arquivo `.env` na raiz do projeto e usado pelo Docker Compose local.
+- Para rodar apenas o backend fora do Docker, `backend/app/core/config.py` tambem suporta carregar um arquivo `.env` no diretorio `backend/`.
 - Use `.env.example` como template e nunca comite segredos reais.
 - O `SECRET_KEY` deve ser unico por ambiente (dev/staging/prod).
+- Em `staging` e `production`, `SECRET_KEY` e obrigatorio e deve ter no minimo 32 caracteres; configuracoes invalidas falham no startup com erro explicito.
 
 Gerar uma chave segura para JWT:
 
@@ -68,8 +70,11 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 uvicorn app.main:app --reload
 ```
+
+O backend local usa `backend/.env` automaticamente quando o arquivo existe. Variaveis do ambiente do shell continuam tendo precedencia.
 
 Frontend:
 
@@ -116,6 +121,8 @@ Template para backend local:
 ```bash
 DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/family_tree
 ```
+
+Se estiver usando `backend/.env`, mantenha esse valor no proprio arquivo para que `uvicorn app.main:app --reload` carregue a configuracao automaticamente. O Alembic continua exigindo `DATABASE_URL` explicito no ambiente de execucao.
 
 SQLite continua suportado para fluxos locais/teste quando configurado explicitamente, mas nunca como fallback implicito para Alembic:
 
