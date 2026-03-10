@@ -85,6 +85,8 @@ export const api = {
   createParentChild: (familyId: number, payload: CreateParentChildRequest) =>
     post<ApiMessageResponse>(familyPath(familyId, "/parent-child-links"), payload),
   preview: (familyId: number) => request<LayoutPreview>(familyPath(familyId, "/preview")),
+  deletePerson: (familyId: number, personId: number) =>
+    request<ApiMessageResponse>(familyPath(familyId, `/persons/${personId}`), { method: "DELETE" }),
   exportPdf: (familyId: number) => post<ApiMessageResponse>(familyPath(familyId, "/export/pdf")),
   listExports: (familyId: number) => request<ExportItem[]>(familyPath(familyId, "/exports")),
   downloadExportUrl: (exportId: number) => `${API_BASE}/exports/${exportId}/download`,

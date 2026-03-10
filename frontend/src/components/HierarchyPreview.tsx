@@ -151,7 +151,7 @@ function PersonNodes({
         return (
           <article
             key={person.id}
-            className={`hierarchy-node ${person.role} ${selectedPersonId === person.id ? "selected" : ""} ${onSelectPerson ? "clickable" : ""}`}
+            className={`hierarchy-node ${person.role} ${selectedPersonId === person.id ? "selected" : ""} ${onSelectPerson ? "clickable" : ""} ${person.is_virtual ? "virtual" : ""}`}
             style={{ left: `${person.x + LAYOUT.PAD_X}px`, top: `${person.y + LAYOUT.PAD_Y}px` }}
             onClick={onSelectPerson ? () => onSelectPerson(person.id) : undefined}
             role={onSelectPerson ? "button" : undefined}

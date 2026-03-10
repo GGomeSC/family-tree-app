@@ -39,6 +39,7 @@ export interface LayoutPerson {
   y: number;
   role: LayoutPersonRole;
   page: number;
+  is_virtual?: boolean;
 }
 
 export interface LayoutUnion {

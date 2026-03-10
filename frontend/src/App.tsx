@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { api } from "./api/client";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -9,21 +10,28 @@ import { FamilyEditorPage } from "./pages/FamilyEditorPage";
 function AppHeader({
   isAuthenticated,
   onLogout,
+  headerAction,
 }: {
   isAuthenticated: boolean;
   onLogout: () => Promise<void>;
+  headerAction?: React.ReactNode;
 }) {
   return (
     <header className="topbar">
-      <h1>Árvore Genealógica</h1>
-      <nav>
-        <Link to="/families">Famílias</Link>
+      <div className="topbar-left">
+        <h1>Árvore Genealógica</h1>
+        <nav className="topbar-nav">
+          <Link to="/families">Famílias</Link>
+        </nav>
+      </div>
+      <div className="topbar-right">
+        {headerAction}
         {isAuthenticated && (
-          <button type="button" onClick={onLogout}>
+          <button type="button" className="btn-logout" onClick={onLogout}>
             Sair
           </button>
         )}
-      </nav>
+      </div>
     </header>
   );
 }
@@ -31,6 +39,7 @@ function AppHeader({
 export function App() {
   const navigate = useNavigate();
   const { authState, isAuthenticated, setAuthState } = useAuthStatus();
+  const [headerAction, setHeaderAction] = useState<React.ReactNode>(null);
 
   async function handleLogout() {
     await api.logout().catch(() => undefined);
@@ -48,7 +57,11 @@ export function App() {
 
   return (
     <div>
-      <AppHeader isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+      <AppHeader
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
+        headerAction={headerAction}
+      />
       <Routes>
         <Route
           path="/login"
@@ -72,7 +85,7 @@ export function App() {
           path="/families/:familyId"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <FamilyEditorPage />
+              <FamilyEditorPage setHeaderAction={setHeaderAction} />
             </ProtectedRoute>
           }
         />
