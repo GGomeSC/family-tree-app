@@ -8,6 +8,17 @@ export default defineConfig(({ mode }) => {
   return {
     base,
     plugins: [react()],
+    build: {
+      minify: "esbuild",
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ["react", "react-dom", "react-router-dom"],
+          },
+        },
+      },
+    },
     server: {
       port: 5173,
     },

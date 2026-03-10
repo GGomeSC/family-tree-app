@@ -79,6 +79,14 @@ npm install
 npm run dev
 ```
 
+Build de produção do frontend:
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
 ### Database migrations
 
 Alembic exige `DATABASE_URL` explicitamente. Se a variavel nao estiver definida, `alembic upgrade head` falha antes de conectar para evitar migracoes acidentais no banco errado.
@@ -160,6 +168,27 @@ npm install
 npm run build:mock
 npm run preview:mock
 ```
+
+### Frontend em produção com Docker
+
+O frontend em produção recebe `VITE_API_URL` no build da imagem, não em runtime do container.
+
+Build da imagem:
+
+```bash
+docker build \
+  --build-arg VITE_API_URL=http://localhost:8000/api/v1 \
+  -t family-tree-frontend:prod \
+  ./frontend
+```
+
+Executar localmente:
+
+```bash
+docker run --rm -p 8080:80 family-tree-frontend:prod
+```
+
+Nesse modo, o nginx serve os arquivos estáticos otimizados em `http://localhost:8080`.
 
 ## Tecnologias usadas
 

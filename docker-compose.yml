@@ -41,6 +41,7 @@ services:
   frontend:
     build:
       context: ./frontend
+      target: dev
     container_name: family_tree_frontend
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
