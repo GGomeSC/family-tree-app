@@ -70,6 +70,27 @@ def build_layout(persons: list[Person], unions: list[Union], links: list[ParentC
     generation = _compute_generations(person_ids, links)
     lineage = _lineage_set(persons, links)
 
+    changed = True
+    while changed:
+        changed = False
+        for union in unions:
+            a, b = union.partner_a_person_id, union.partner_b_person_id
+            if a in lineage and b not in lineage:
+                if generation.get(b) != generation.get(a):
+                    generation[b] = generation.get(a, 0)
+                    changed = True
+            elif b in lineage and a not in lineage:
+                if generation.get(a) != generation.get(b):
+                    generation[a] = generation.get(b, 0)
+                    changed = True
+            elif a not in lineage and b not in lineage:
+                if generation.get(a, 0) > generation.get(b, 0):
+                    generation[b] = generation.get(a, 0)
+                    changed = True
+                elif generation.get(b, 0) > generation.get(a, 0):
+                    generation[a] = generation.get(b, 0)
+                    changed = True
+
     grouped = defaultdict(list)
     for person in persons:
         grouped[generation.get(person.id, 0)].append(person.id)

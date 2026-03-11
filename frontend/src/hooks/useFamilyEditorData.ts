@@ -6,11 +6,39 @@ import {
   CreatePersonRequest,
   CreateUnionRequest,
   ExportItem,
+  LayoutPerson,
   LayoutPreview,
   Person,
 } from "../types";
 
 const EMPTY_PREVIEW_DETAIL = "Family has no persons";
+
+function findSafeX(persons: LayoutPerson[], targetY: number, desiredX: number, widthNeeded: number = 260): number {
+  const yMargin = 50;
+  const sameRowDocs = persons.filter((p) => Math.abs(p.y - targetY) < yMargin);
+
+  if (sameRowDocs.length === 0) return desiredX;
+
+  let testX = desiredX;
+  const step = 20;
+  let iteration = 0;
+  const maxIterations = 100;
+
+  while (iteration < maxIterations) {
+    const collision = sameRowDocs.find(
+      (p) => Math.abs(p.x - testX) < widthNeeded
+    );
+    if (!collision) {
+      return testX;
+    }
+    
+    // expand outward
+    const offset = step * Math.ceil(iteration / 2);
+    testX = desiredX + (iteration % 2 === 0 ? offset : -offset);
+    iteration++;
+  }
+  return desiredX;
+}
 
 function isEmptyPreviewError(error: unknown) {
   return error instanceof ApiError && error.status === 400 && error.detail === EMPTY_PREVIEW_DETAIL;
@@ -115,26 +143,28 @@ export function useFamilyEditorData(familyId: number) {
             const p2Id = getNextVId();
             const uId = getNextVId();
 
+            const safeX = findSafeX(newPreview.persons ?? [], target.y - verticalGap, target.x, horizontalGap + 40);
+
             newPreview.persons = [
               ...newPreview.persons,
               {
                 id: p1Id,
-                name: "Pai/Mãe 1",
+                name: `Mãe de ${target.name}`,
                 birth_date: "",
                 is_virtual: true,
                 is_richiedente: false,
-                x: target.x - horizontalGap / 2,
+                x: safeX - horizontalGap / 2,
                 y: target.y - verticalGap,
                 role: "lineage",
                 page: target.page,
               },
               {
                 id: p2Id,
-                name: "Pai/Mãe 2",
+                name: `Pai de ${target.name}`,
                 birth_date: "",
                 is_virtual: true,
                 is_richiedente: false,
-                x: target.x + horizontalGap / 2,
+                x: safeX + horizontalGap / 2,
                 y: target.y - verticalGap,
                 role: "spouse",
                 page: target.page,
@@ -153,19 +183,25 @@ export function useFamilyEditorData(familyId: number) {
           } else {
             const pId = getNextVId();
             const uId = getNextVId();
-            const existingParentId = parentEdges[0].from_id;
+            const existingParentEdge = parentEdges[0];
+            if (!existingParentEdge) return currentPreview;
+            const existingParentId = existingParentEdge.from_id;
             const existingParent = currentPreview.persons.find(p => p.id === existingParentId);
+
+            const desiredX = (existingParent?.x ?? target.x) + horizontalGap;
+            const targetY = existingParent?.y ?? target.y - verticalGap;
+            const safeX = findSafeX(newPreview.persons ?? [], targetY, desiredX, horizontalGap);
 
             newPreview.persons = [
               ...newPreview.persons,
               {
                 id: pId,
-                name: "Pai/Mãe",
+                name: `Pai/Mãe de ${target.name}`,
                 birth_date: "",
                 is_virtual: true,
                 is_richiedente: false,
-                x: (existingParent?.x ?? target.x) + horizontalGap,
-                y: (existingParent?.y ?? target.y - verticalGap),
+                x: safeX,
+                y: targetY,
                 role: "spouse",
                 page: target.page,
               },
@@ -176,21 +212,25 @@ export function useFamilyEditorData(familyId: number) {
               { id: uId, partner_a_person_id: existingParentId, partner_b_person_id: pId, marriage_date: null },
             ];
 
-            newPreview.edges = newPreview.edges.map((e) =>
-              e.from_id === existingParentId && e.to_id === targetId ? { ...e, via_union_id: uId } : e
-            );
+            newPreview.edges = [
+              ...newPreview.edges.map((e) =>
+                e.from_id === existingParentId && e.to_id === targetId ? { ...e, via_union_id: uId } : e
+              ),
+              { from_id: pId, to_id: targetId, via_union_id: uId, from_page: target.page, to_page: target.page },
+            ];
           }
         } else if (type === "child") {
           const vId = getNextVId();
+          const safeX = findSafeX(newPreview.persons ?? [], target.y + verticalGap, target.x, horizontalGap);
           newPreview.persons = [
             ...newPreview.persons,
             {
               id: vId,
-              name: "Filho(a)",
+              name: `Filho/Filha de ${target.name}`,
               birth_date: "",
               is_virtual: true,
               is_richiedente: false,
-              x: target.x,
+              x: safeX,
               y: target.y + verticalGap,
               role: "lineage",
               page: target.page,
@@ -203,15 +243,16 @@ export function useFamilyEditorData(familyId: number) {
         } else if (type === "partner") {
           const vId = getNextVId();
           const uId = getNextVId();
+          const safeX = findSafeX(newPreview.persons ?? [], target.y, target.x + horizontalGap, horizontalGap);
           newPreview.persons = [
             ...newPreview.persons,
             {
               id: vId,
-              name: "Cônjuge",
+              name: `Cônjuge de ${target.name}`,
               birth_date: "",
               is_virtual: true,
               is_richiedente: false,
-              x: target.x + horizontalGap,
+              x: safeX,
               y: target.y,
               role: "spouse",
               page: target.page,
@@ -223,15 +264,16 @@ export function useFamilyEditorData(familyId: number) {
           ];
         } else if (type === "sibling") {
           const vId = getNextVId();
+          const safeX = findSafeX(newPreview.persons ?? [], target.y, target.x - horizontalGap, horizontalGap);
           newPreview.persons = [
             ...newPreview.persons,
             {
               id: vId,
-              name: "Irmão(ã)",
+              name: `Irmão/Irmã de ${target.name}`,
               birth_date: "",
               is_virtual: true,
               is_richiedente: false,
-              x: target.x + horizontalGap,
+              x: safeX,
               y: target.y,
               role: "lineage",
               page: target.page,
@@ -267,13 +309,17 @@ export function useFamilyEditorData(familyId: number) {
         for (const edge of vEdges) {
           const fromId = edge.from_id === vId ? newPerson.id : edge.from_id;
           const toId = edge.to_id === vId ? newPerson.id : edge.to_id;
-          await api.createParentChild(familyId, { parent_person_id: fromId, child_person_id: toId });
+          if (fromId > 0 && toId > 0) {
+            await api.createParentChild(familyId, { parent_person_id: fromId, child_person_id: toId });
+          }
         }
 
         for (const union of vUnions) {
           const aId = union.partner_a_person_id === vId ? newPerson.id : union.partner_a_person_id;
           const bId = union.partner_b_person_id === vId ? newPerson.id : union.partner_b_person_id;
-          await api.createUnion(familyId, { partner_a_person_id: aId, partner_b_person_id: bId });
+          if (aId > 0 && bId > 0) {
+            await api.createUnion(familyId, { partner_a_person_id: aId, partner_b_person_id: bId });
+          }
         }
 
         await loadData();
